@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/lib/server/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model SensorReading {
@@ -14,6 +14,6 @@ model SensorReading {
   temperature Float
   createdAt   DateTime @default(now()) @map("created_at")
 
-  @@index([createdAt(sort: Desc)])
+  @@index([createdAt])
   @@map("sensor_readings")
 }

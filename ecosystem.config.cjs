@@ -25,7 +25,7 @@ module.exports = {
 			max_memory_restart: '512M',
 			env: {
 				NODE_ENV: 'production',
-				PORT: PORT || '3000',
+				PORT: PORT || '1212',
 				HOST: HOST || '0.0.0.0',
 				DATABASE_URL,
 				IOT_SERVER_TOKEN,
