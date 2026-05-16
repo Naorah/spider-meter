@@ -16,13 +16,18 @@ export type SensorPageSize = (typeof SENSOR_PAGE_SIZES)[number];
 export type SensorReadingFilters = {
 	page: number;
 	pageSize: SensorPageSize;
-	temperature: string;
+	temperature: string | number;
 	tempOp: CompareOp;
-	humidity: string;
+	humidity: string | number;
 	humidityOp: CompareOp;
 	dateFrom: string;
 	dateTo: string;
 };
+
+function filterParam(value: string | number | null | undefined): string {
+	if (value === null || value === undefined || value === '') return '';
+	return String(value).trim();
+}
 
 export function defaultSensorFilters(): SensorReadingFilters {
 	return {
@@ -42,13 +47,13 @@ export function buildSensorReadingsQuery(filters: SensorReadingFilters): string 
 	params.set('page', String(filters.page));
 	params.set('pageSize', String(filters.pageSize));
 
-	const temp = filters.temperature.trim();
+	const temp = filterParam(filters.temperature);
 	if (temp !== '') {
 		params.set('temperature', temp);
 		params.set('tempOp', filters.tempOp);
 	}
 
-	const hum = filters.humidity.trim();
+	const hum = filterParam(filters.humidity);
 	if (hum !== '') {
 		params.set('humidity', hum);
 		params.set('humidityOp', filters.humidityOp);
