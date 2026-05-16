@@ -156,6 +156,29 @@ body {
 	cursor: not-allowed;
 }
 
+.btn-danger {
+	border-radius: 0.5rem;
+	background: #dc2626;
+	color: #fff;
+	font-weight: 500;
+	padding: 0.5rem 0.9rem;
+	font-size: 0.875rem;
+	transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+	opacity: 0.92;
+}
+
+.btn-danger:active:not(:disabled) {
+	transform: scale(0.97);
+}
+
+.btn-danger:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
 .btn-secondary {
 	border-radius: 0.5rem;
 	border: 1px solid var(--color-border);
@@ -258,4 +281,40 @@ body {
 
 .admin-panel {
 	animation: fade-up 0.35s ease-out both;
+}
+
+.sensor-filters {
+	border-radius: 0.75rem;
+	border: 1px solid var(--color-border);
+	background: color-mix(in srgb, var(--color-bg-elevated) 40%, transparent);
+	padding: 1rem 1.25rem;
+}
+
+.sensor-filters-grid {
+	display: grid;
+	gap: 1rem;
+	margin-top: 1rem;
+}
+
+@media (min-width: 640px) {
+	.sensor-filters-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+.sensor-filter-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+
+.sensor-filter-row {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.sensor-filter-op {
+	width: 4.25rem;
+	flex-shrink: 0;
+	text-align: center;
 }

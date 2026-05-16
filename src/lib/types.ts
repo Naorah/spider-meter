@@ -6,6 +6,14 @@ export type SensorReadingDto = {
 	createdAt: string;
 };
 
+export type SensorReadingListDto = {
+	items: SensorReadingDto[];
+	total: number;
+	page: number;
+	pageSize: 20 | 50 | 100;
+	totalPages: number;
+};
+
 export type SpiderProfileDto = {
 	name: string;
 	commonName: string;
