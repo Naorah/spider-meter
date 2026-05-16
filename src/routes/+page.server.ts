@@ -1,12 +1,12 @@
-import { getSensorReadings } from '$lib/server/sensors';
-import { spider } from '$lib/spider';
+import { getPublicContent } from '$lib/server/content';
+import { getLatestSensorReading } from '$lib/server/sensors';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
-	const readings = await getSensorReadings();
+	const [content, latest] = await Promise.all([getPublicContent(), getLatestSensorReading()]);
 
 	return {
-		spider,
-		...readings
+		...content,
+		latest
 	};
 };

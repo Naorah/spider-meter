@@ -10,8 +10,10 @@ Shelly H&T  ──GET /report?hum&temp&id&token──►  SvelteKit (Node)
                                                     ├─► SQLite (Prisma)
                                                     └─► logs/report.log
 
-Navigateur  ──GET /──────────────────────────►  Landing (hero, fiche, habitat, graphiques)
-              ──GET /api/sensors (30 s)──────►  Rafraîchissement auto habitat + historique
+Navigateur  ──GET /──────────────────────────►  Landing (actus, fiche, habitat, graphiques, mues)
+              ──GET /api/sensors (30 s)──────►  Rafraîchissement auto habitat
+              ──GET /api/sensors/chart───────►  Graphiques agrégés (jour / semaine / mois)
+              ──POST /api/auth/login─────────►  Session cookie → /admin
 ```
 
 1. La Shelly envoie périodiquement (ou sur seuil) une requête **HTTP GET** vers `/report`.
@@ -61,8 +63,10 @@ Copier [`.env.example`](.env.example) vers `.env` à la racine du projet.
 | Variable | Obligatoire | Description |
 |----------|-------------|-------------|
 | `DATABASE_URL` | Oui | URL SQLite Prisma. Ex. `file:./dev.db` (dev) ou chemin **absolu** en prod : `file:/opt/spider-meter/data/spider.db` |
-| `IOT_SERVER_TOKEN` | Oui | Secret partagé avec la Shelly, passé en query `?token=` sur `/report` |
-| `CHART_READINGS_LIMIT` | Non | Nombre de points dans les graphiques (défaut : `72`) |
+| `IOT_SERVER_TOKEN` | Repli | Utilisé si aucun token n’a été généré depuis `/admin` |
+| `SESSION_SECRET` | Oui (prod) | Signature du cookie de session admin |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Non | Bootstrap du **premier** compte admin si la BDD est vide |
+| `CHART_READINGS_LIMIT` | Non | Legacy / fallback interne |
 | `PORT` | Non | Port du serveur Node en prod (défaut PM2 : `1212`) |
 | `HOST` | Non | Interface d’écoute (défaut : `0.0.0.0`) |
 | `ORIGIN` | Non | URL publique du site (`https://mon-domaine.fr`) si les meta Open Graph / embeds sont incorrects derrière un proxy |
@@ -74,36 +78,38 @@ Exemple `.env` minimal :
 
 ```env
 DATABASE_URL="file:./dev.db"
-IOT_SERVER_TOKEN="remplacer-par-un-secret-long"
-CHART_READINGS_LIMIT=72
+SESSION_SECRET="secret-long-aleatoire"
+IOT_SERVER_TOKEN="repli-shelly-si-pas-de-token-admin"
 ```
 
 ---
 
-## Personnalisation
+## Administration (`/admin`)
 
-### Fiche de l’araignée
+1. Cliquer sur **Admin** (en haut à droite de la page d’accueil).
+2. Se connecter (ou créer le premier compte si la base est vide).
+3. Gérer depuis le panel :
+   - **Fiche de l’occupante** (nom, espèce, date d’emménagement, notes)
+   - **Token Shelly** (génération 32 caractères, stocké en BDD)
+   - **Mues** (liste nom + date)
+   - **Actualités** (historique, la plus récente en tête sur `/`)
+   - **Mot de passe** du compte admin
 
-Éditer [`src/lib/spider.ts`](src/lib/spider.ts) :
+Le token IoT généré remplace `IOT_SERVER_TOKEN` pour `/report` tant qu’il est en base.
 
-```ts
-export const spider = {
-  name: '…',
-  commonName: '…',
-  scientificName: 'Phidippus regius',
-  speciesNotes: '…',
-  movedInLabel: '15 mai 2026'
-};
-```
+### Premier compte admin
 
-### Image hero et embeds (réseaux sociaux)
+- Soit variables `ADMIN_USERNAME` + `ADMIN_PASSWORD` dans `.env` au premier login.
+- Soit formulaire de création affiché dans la modale si aucun admin n’existe.
 
-- Placer la photo dans [`static/phidippus.jpg`](static/phidippus.jpg) (servie sur `/phidippus.jpg`).
-- Titre, description et meta : [`src/lib/site.ts`](src/lib/site.ts) + [`src/routes/+layout.svelte`](src/routes/+layout.svelte).
+### Image hero et meta
 
-### Limite d’historique des graphiques
+- Photo : [`static/phidippus.jpg`](static/phidippus.jpg)
+- Titre / description Open Graph : [`src/lib/site.ts`](src/lib/site.ts)
 
-Variable `CHART_READINGS_LIMIT` dans `.env`.
+### Graphiques publics
+
+Contrôles **Jour / Semaine / Mois** et **10 / 20 / 50 / 100** points : agrégation par moyennes sur des créneaux temporels (`/api/sensors/chart`). Les intervalles sans données restent des « trous » sur la courbe.
 
 ---
 
@@ -206,6 +212,7 @@ ORIGIN=https://spider-meter.example.com
 ```bash
 npm ci
 npm run db:deploy      # prisma migrate deploy
+npm run db:seed        # profil araignée par défaut (si besoin)
 npm run build
 ```
 
@@ -255,8 +262,14 @@ Sauvegarder régulièrement le fichier SQLite pointé par `DATABASE_URL` (ex. `d
 | Route | Méthode | Description |
 |-------|---------|-------------|
 | `/` | GET | Landing page |
+| `/admin` | GET | Panel admin (cookie requis) |
 | `/report` | GET | Ingestion Shelly (token requis) |
-| `/api/sensors` | GET | JSON `{ latest, history }` pour le polling client |
+| `/api/sensors` | GET | JSON `{ latest }` — habitat live |
+| `/api/sensors/chart` | GET | `?range=day\|week\|month&points=10\|20\|50\|100` |
+| `/api/auth/login` | POST | Connexion admin |
+| `/api/auth/logout` | POST | Déconnexion |
+| `/api/auth/setup` | POST | Création du premier admin |
+| `/api/admin/*` | * | CRUD contenu (authentifié) |
 
 Logs des appels `/report` : fichier JSON structuré (Pino), par défaut **`logs/report.log`**. Le token y est masqué (`[redacted]`).
 

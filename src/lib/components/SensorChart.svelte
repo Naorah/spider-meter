@@ -15,13 +15,13 @@
 	} from 'chart.js';
 	import 'chartjs-adapter-date-fns';
 	import { fr } from 'date-fns/locale';
-	import type { SensorReadingDto } from '$lib/types';
+	import type { ChartPointDto } from '$lib/types';
 	import { onMount } from 'svelte';
 
 	type Metric = 'humidity' | 'temperature';
 
 	let {
-		history,
+		points,
 		metric,
 		label,
 		color,
@@ -29,7 +29,7 @@
 		yMin: yMinProp,
 		yMax: yMaxProp
 	}: {
-		history: SensorReadingDto[];
+		points: ChartPointDto[];
 		metric: Metric;
 		label: string;
 		color: string;
@@ -60,31 +60,30 @@
 		};
 	})();
 
-	function buildPoints(readings: SensorReadingDto[]) {
-		return readings.map((r) => ({
-			x: new Date(r.createdAt).getTime(),
-			y: metric === 'humidity' ? r.humidity : r.temperature
-		}));
+	function toChartData(series: ChartPointDto[]) {
+		return series.map((p) => ({ x: new Date(p.x).getTime(), y: p.y }));
 	}
 
-	function yBounds(points: { y: number }[]) {
+	function yBounds(chartPoints: { y: number }[]) {
+		if (chartPoints.length === 0) {
+			return { yMin: metric === 'humidity' ? 0 : 0, yMax: metric === 'humidity' ? 100 : 40 };
+		}
 		const yMin =
-			yMinProp ?? (metric === 'humidity' ? 0 : Math.min(...points.map((d) => d.y)) - 2);
+			yMinProp ?? (metric === 'humidity' ? 0 : Math.min(...chartPoints.map((d) => d.y)) - 2);
 		const yMax =
-			yMaxProp ?? (metric === 'humidity' ? 100 : Math.max(...points.map((d) => d.y)) + 2);
+			yMaxProp ?? (metric === 'humidity' ? 100 : Math.max(...chartPoints.map((d) => d.y)) + 2);
 		return { yMin, yMax };
 	}
 
-	function chartConfig(points: { x: number; y: number }[]): ChartConfiguration<'line'> {
-		const { yMin, yMax } = yBounds(points);
-
+	function chartConfig(chartPoints: { x: number; y: number }[]): ChartConfiguration<'line'> {
+		const { yMin, yMax } = yBounds(chartPoints);
 		return {
 			type: 'line',
 			data: {
 				datasets: [
 					{
 						label,
-						data: points,
+						data: chartPoints,
 						borderColor: color,
 						backgroundColor: color,
 						parsing: false,
@@ -126,10 +125,7 @@
 						min: yMin,
 						max: yMax,
 						grid: { color: 'rgba(155, 152, 168, 0.12)' },
-						ticks: {
-							color: '#9b98a8',
-							callback: (v) => `${v}${unit}`
-						}
+						ticks: { color: '#9b98a8', callback: (v) => `${v}${unit}` }
 					}
 				}
 			}
@@ -138,10 +134,9 @@
 
 	$effect(() => {
 		if (!browser || !canvas) return;
+		const chartPoints = toChartData(points);
 
-		const points = buildPoints(history);
-
-		if (points.length === 0) {
+		if (chartPoints.length === 0) {
 			chart?.destroy();
 			chart = null;
 			return;
@@ -150,8 +145,8 @@
 		registered();
 
 		if (chart) {
-			chart.data.datasets[0].data = points;
-			const { yMin, yMax } = yBounds(points);
+			chart.data.datasets[0].data = chartPoints;
+			const { yMin, yMax } = yBounds(chartPoints);
 			if (chart.options.scales?.y) {
 				chart.options.scales.y.min = yMin;
 				chart.options.scales.y.max = yMax;
@@ -160,7 +155,7 @@
 			return;
 		}
 
-		chart = new Chart(canvas, chartConfig(points));
+		chart = new Chart(canvas, chartConfig(chartPoints));
 	});
 
 	onMount(() => () => {
@@ -171,9 +166,9 @@
 
 <article class="card flex h-72 flex-col p-5 sm:h-80">
 	<h3 class="mb-4 text-sm font-semibold text-[var(--color-muted)]">{label}</h3>
-	{#if history.length === 0}
+	{#if points.length === 0}
 		<p class="flex flex-1 items-center justify-center text-sm text-[var(--color-muted)]">
-			Pas encore assez de données pour tracer l’historique.
+			Pas encore assez de données pour cette période.
 		</p>
 	{:else}
 		<div class="relative min-h-0 flex-1">

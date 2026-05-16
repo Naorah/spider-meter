@@ -17,3 +17,49 @@ model SensorReading {
   @@index([createdAt])
   @@map("sensor_readings")
 }
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("admin_users")
+}
+
+model SpiderProfile {
+  id               Int      @id @default(1)
+  name             String
+  commonName       String   @map("common_name")
+  scientificName   String   @map("scientific_name")
+  speciesNotes     String   @map("species_notes")
+  movedInDate      DateTime @map("moved_in_date")
+
+  @@map("spider_profiles")
+}
+
+model Molt {
+  id        Int      @id @default(autoincrement())
+  name      String
+  moltDate  DateTime @map("molt_date")
+  sortOrder Int      @default(0) @map("sort_order")
+
+  @@map("molts")
+}
+
+model NewsItem {
+  id          Int      @id @default(autoincrement())
+  title       String
+  body        String
+  publishedAt DateTime @default(now()) @map("published_at")
+
+  @@index([publishedAt(sort: Desc)])
+  @@map("news_items")
+}
+
+model AppSetting {
+  key   String @id
+  value String
+
+  @@map("app_settings")
+}

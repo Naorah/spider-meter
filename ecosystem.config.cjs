@@ -2,7 +2,14 @@ const path = require('path');
 
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-const { DATABASE_URL, IOT_SERVER_TOKEN, CHART_READINGS_LIMIT, PORT, HOST } = process.env;
+const {
+	DATABASE_URL,
+	IOT_SERVER_TOKEN,
+	CHART_READINGS_LIMIT,
+	PORT,
+	HOST,
+	SESSION_SECRET
+} = process.env;
 
 if (!DATABASE_URL) {
 	console.warn('[ecosystem] DATABASE_URL manquant — définissez-le dans .env');
@@ -29,7 +36,8 @@ module.exports = {
 				HOST: HOST || '0.0.0.0',
 				DATABASE_URL,
 				IOT_SERVER_TOKEN,
-				CHART_READINGS_LIMIT: CHART_READINGS_LIMIT || '72'
+				CHART_READINGS_LIMIT: CHART_READINGS_LIMIT || '72',
+				SESSION_SECRET
 			},
 			error_file: './logs/pm2-error.log',
 			out_file: './logs/pm2-out.log',

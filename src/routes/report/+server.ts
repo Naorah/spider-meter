@@ -1,5 +1,5 @@
-import { IOT_SERVER_TOKEN } from '$env/static/private';
 import { prisma } from '$lib/server/db';
+import { getIotToken } from '$lib/server/settings';
 import {
 	logReportRequest,
 	sanitizeSearchParams,
@@ -28,8 +28,9 @@ export const GET: RequestHandler = async (event) => {
 	const { url } = event;
 	const ctx = requestContext(event);
 
+	const expectedToken = await getIotToken();
 	const token = url.searchParams.get('token');
-	if (!token || token !== IOT_SERVER_TOKEN) {
+	if (!expectedToken || !token || token !== expectedToken) {
 		logReportRequest({
 			...ctx,
 			status: 'unauthorized',
