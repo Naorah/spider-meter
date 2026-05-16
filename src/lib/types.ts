@@ -44,6 +44,7 @@ export type ChartSeriesDto = {
 		points: ChartPointCount;
 		bucketMs: number;
 		rawCount: number;
-		partial: boolean;
+		displayedCount: number;
+		aggregated: boolean;
 	};
 };

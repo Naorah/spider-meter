@@ -20,6 +20,48 @@ export function parseChartPoints(value: string | null): ChartPointCount {
 	return 20;
 }
 
+function rawPoints(
+	readings: { createdAt: Date; humidity: number; temperature: number }[],
+	metric: 'humidity' | 'temperature'
+): ChartPointDto[] {
+	return readings.map((r) => ({
+		x: r.createdAt.toISOString(),
+		y: metric === 'humidity' ? r.humidity : r.temperature
+	}));
+}
+
+/** Regroupe les lectures en `targetCount` blocs contigus et moyenne chaque bloc. */
+function downsampleByAveraging(
+	readings: { createdAt: Date; humidity: number; temperature: number }[],
+	targetCount: number,
+	metric: 'humidity' | 'temperature'
+): ChartPointDto[] {
+	const n = readings.length;
+	const points: ChartPointDto[] = [];
+	const groupSize = n / targetCount;
+
+	for (let i = 0; i < targetCount; i++) {
+		const start = Math.floor(i * groupSize);
+		const end = Math.floor((i + 1) * groupSize);
+		const slice = readings.slice(start, end);
+		if (slice.length === 0) continue;
+
+		let sumY = 0;
+		let sumT = 0;
+		for (const r of slice) {
+			sumY += metric === 'humidity' ? r.humidity : r.temperature;
+			sumT += r.createdAt.getTime();
+		}
+
+		points.push({
+			x: new Date(sumT / slice.length).toISOString(),
+			y: sumY / slice.length
+		});
+	}
+
+	return points;
+}
+
 export async function getAggregatedChartSeries(
 	range: ChartRange,
 	pointCount: ChartPointCount,
@@ -34,32 +76,19 @@ export async function getAggregatedChartSeries(
 		orderBy: { createdAt: 'asc' }
 	});
 
-	const bucketMs = windowMs / pointCount;
-	const buckets: { sum: number; count: number; center: number }[] = Array.from(
-		{ length: pointCount },
-		(_, i) => ({
-			sum: 0,
-			count: 0,
-			center: from.getTime() + bucketMs * (i + 0.5)
-		})
-	);
+	const rawCount = readings.length;
+	let points: ChartPointDto[];
+	let aggregated: boolean;
 
-	for (const reading of readings) {
-		const t = reading.createdAt.getTime();
-		const index = Math.min(Math.floor((t - from.getTime()) / bucketMs), pointCount - 1);
-		if (index < 0) continue;
-		const value = metric === 'humidity' ? reading.humidity : reading.temperature;
-		buckets[index].sum += value;
-		buckets[index].count += 1;
-	}
-
-	const points: ChartPointDto[] = [];
-	for (const bucket of buckets) {
-		if (bucket.count === 0) continue;
-		points.push({
-			x: new Date(bucket.center).toISOString(),
-			y: bucket.sum / bucket.count
-		});
+	if (rawCount === 0) {
+		points = [];
+		aggregated = false;
+	} else if (rawCount <= pointCount) {
+		points = rawPoints(readings, metric);
+		aggregated = false;
+	} else {
+		points = downsampleByAveraging(readings, pointCount, metric);
+		aggregated = true;
 	}
 
 	return {
@@ -67,9 +96,10 @@ export async function getAggregatedChartSeries(
 		meta: {
 			range,
 			points: pointCount,
-			bucketMs,
-			rawCount: readings.length,
-			partial: readings.length < pointCount
+			bucketMs: aggregated ? windowMs / pointCount : 0,
+			rawCount,
+			displayedCount: points.length,
+			aggregated
 		}
 	};
 }

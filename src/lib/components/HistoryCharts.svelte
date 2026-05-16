@@ -10,7 +10,8 @@
 	let humiditySeries = $state<ChartSeriesDto | null>(null);
 	let temperatureSeries = $state<ChartSeriesDto | null>(null);
 	let loading = $state(false);
-	let partialHint = $state(false);
+
+	const chartMeta = $derived(humiditySeries?.meta ?? temperatureSeries?.meta ?? null);
 
 	async function loadCharts() {
 		loading = true;
@@ -22,7 +23,6 @@
 			const data = await res.json();
 			humiditySeries = data.humidity;
 			temperatureSeries = data.temperature;
-			partialHint = Boolean(data.humidity?.meta?.partial || data.temperature?.meta?.partial);
 		} finally {
 			loading = false;
 		}
@@ -48,7 +48,7 @@
 				<div>
 					<h2 class="section-title">Historique</h2>
 					<p class="section-subtitle">
-						Vues agrégées — les intervalles vides reflètent les rapports réels de la sonde
+						Les intervalles vides reflètent les rapports réels de la sonde
 					</p>
 				</div>
 			</div>
@@ -57,13 +57,14 @@
 			{/if}
 		</div>
 
-		<div class="card mt-6 p-5">
-			<ChartControls bind:range bind:points={pointCount} />
-			{#if partialHint}
-				<p class="mt-4 text-xs text-[var(--color-muted)]">
-					Données partielles sur cette période — moyennes calculées par créneaux.
-				</p>
-			{/if}
+		<div class="card card--no-lift mt-6 p-5">
+			<ChartControls
+				bind:range
+				bind:points={pointCount}
+				rawCount={chartMeta?.rawCount ?? 0}
+				displayedCount={chartMeta?.displayedCount ?? 0}
+				aggregated={chartMeta?.aggregated ?? false}
+			/>
 		</div>
 
 		<div class="mt-8 grid gap-5 lg:grid-cols-2">

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Clock, Drop, Thermometer } from 'phosphor-svelte';
+	import { Clock, Drop, Plant, Thermometer } from 'phosphor-svelte';
 	import type { SensorReadingDto } from '$lib/types';
 
 	let { latest }: { latest: SensorReadingDto | null } = $props();
@@ -16,8 +16,13 @@
 
 <section class="animate-fade-up animate-delay-2 px-6 py-14 sm:px-10 lg:px-16">
 	<div class="mx-auto max-w-5xl">
-		<h2 class="section-title">Habitat actuel</h2>
-		<p class="section-subtitle">Conditions en temps réel —</p>
+		<div class="mb-6 flex items-center gap-3">
+			<Plant size={28} weight="duotone" class="text-[var(--color-accent)]" />
+			<div>
+				<h2 class="section-title">Habitat actuel</h2>
+				<p class="section-subtitle">Conditions en temps réel — mise à jour automatique toutes les 30&nbsp;s</p>
+			</div>
+		</div>
 
 		{#if latest}
 			<div class="mt-8 grid gap-5 sm:grid-cols-3">

@@ -1,8 +1,43 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import type { MoltDto, NewsItemDto } from '$lib/types';
 	import { Plus, Trash } from 'phosphor-svelte';
 
+	type AdminTab = 'spider' | 'token' | 'molts' | 'news' | 'account';
+
+	const tabs: { id: AdminTab; label: string }[] = [
+		{ id: 'spider', label: 'Fiche occupante' },
+		{ id: 'token', label: 'Token Shelly' },
+		{ id: 'molts', label: 'Mues' },
+		{ id: 'news', label: 'Actualités' },
+		{ id: 'account', label: 'Compte' }
+	];
+
+	function parseTab(value: string | null): AdminTab {
+		if (value === 'token' || value === 'molts' || value === 'news' || value === 'account') {
+			return value;
+		}
+		return 'spider';
+	}
+
 	let { data } = $props();
+
+	let activeTab = $state<AdminTab>(parseTab(page.url.searchParams.get('tab')));
+
+	$effect(() => {
+		activeTab = parseTab(page.url.searchParams.get('tab'));
+	});
+
+	function selectTab(id: AdminTab) {
+		const url = new URL(page.url);
+		url.searchParams.set('tab', id);
+		goto(`${url.pathname}?${url.searchParams.toString()}`, {
+			replaceState: true,
+			keepFocus: true,
+			noScroll: true
+		});
+	}
 
 	let spider = $state({
 		name: data.spider?.name ?? '',
@@ -142,146 +177,187 @@
 	<p class="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-300">{error}</p>
 {/if}
 
-<section class="card p-6">
-	<h2 class="section-title">Fiche de l’occupante</h2>
-	<form class="mt-6 space-y-4" onsubmit={saveSpider}>
-		<label class="field">
-			<span class="field-label">Prénom / surnom</span>
-			<input class="field-input" bind:value={spider.name} required />
-		</label>
-		<label class="field">
-			<span class="field-label">Nom commun</span>
-			<input class="field-input" bind:value={spider.commonName} />
-		</label>
-		<label class="field">
-			<span class="field-label">Nom scientifique</span>
-			<input class="field-input" bind:value={spider.scientificName} required />
-		</label>
-		<label class="field">
-			<span class="field-label">Date d’emménagement</span>
-			<input class="field-input" type="date" bind:value={spider.movedInDate} required />
-		</label>
-		<label class="field">
-			<span class="field-label">Notes d’espèce</span>
-			<textarea class="field-input min-h-28" bind:value={spider.speciesNotes}></textarea>
-		</label>
-		<button type="submit" class="btn-primary">Enregistrer la fiche</button>
-	</form>
-</section>
-
-<section class="card p-6">
-	<h2 class="section-title">Token sondes Shelly</h2>
-	<p class="section-subtitle mt-1">
-		Paramètre <code class="text-[var(--color-accent)]">token</code> dans l’URL HTTP de la Shelly
-	</p>
-	{#if hasIotToken && iotMasked}
-		<p class="mt-4 font-mono text-sm">{iotMasked}</p>
-	{:else}
-		<p class="mt-4 text-sm text-[var(--color-muted)]">Aucun token en base (repli .env possible)</p>
-	{/if}
-	{#if iotToken}
-		<p class="mt-2 break-all font-mono text-xs text-[var(--color-accent)]">{iotToken}</p>
-		<button type="button" class="btn-secondary mt-2" onclick={copyToken}>Copier le token</button>
-	{/if}
-	<button type="button" class="btn-primary mt-4" onclick={generateToken}>Générer un token (32 car.)</button>
-</section>
-
-<section class="card p-6">
-	<h2 class="section-title">Mues</h2>
-	<form class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end" onsubmit={addMolt}>
-		<label class="field flex-1">
-			<span class="field-label">Nom</span>
-			<input class="field-input" bind:value={newMoltName} placeholder="Mue L5…" required />
-		</label>
-		<label class="field">
-			<span class="field-label">Date</span>
-			<input class="field-input" type="date" bind:value={newMoltDate} required />
-		</label>
-		<button type="submit" class="btn-primary inline-flex items-center gap-2 sm:mb-0.5">
-			<Plus size={18} weight="bold" />
-			Ajouter
+<nav class="admin-tabs" aria-label="Sections d’administration">
+	{#each tabs as tab (tab.id)}
+		<button
+			type="button"
+			class="admin-tab"
+			class:admin-tab-active={activeTab === tab.id}
+			aria-selected={activeTab === tab.id}
+			role="tab"
+			onclick={() => selectTab(tab.id)}
+		>
+			{tab.label}
 		</button>
-	</form>
-	<ul class="mt-6 space-y-2">
-		{#each molts as molt (molt.id)}
-			<li class="flex items-center justify-between gap-3 rounded-lg border border-[var(--color-border)] px-4 py-3">
-				<div>
-					<p class="font-medium">{molt.name}</p>
-					<p class="text-xs text-[var(--color-muted)]">
-						{dateFormatter.format(new Date(molt.moltDate))}
-					</p>
-				</div>
-				<button
-					type="button"
-					class="btn-icon text-red-400"
-					onclick={() => deleteMolt(molt.id)}
-					aria-label="Supprimer"
-				>
-					<Trash size={18} />
-				</button>
-			</li>
-		{:else}
-			<p class="text-sm text-[var(--color-muted)]">Aucune mue enregistrée.</p>
-		{/each}
-	</ul>
-</section>
+	{/each}
+</nav>
 
-<section class="card p-6">
-	<h2 class="section-title">Actualités</h2>
-	<form class="mt-4 space-y-4" onsubmit={addNews}>
-		<label class="field">
-			<span class="field-label">Titre</span>
-			<input class="field-input" bind:value={newsTitle} required />
-		</label>
-		<label class="field">
-			<span class="field-label">Contenu</span>
-			<textarea class="field-input min-h-28" bind:value={newsBody} required></textarea>
-		</label>
-		<button type="submit" class="btn-primary">Publier</button>
-	</form>
-	<ul class="mt-8 space-y-3">
-		{#each news as item (item.id)}
-			<li class="rounded-lg border border-[var(--color-border)] p-4">
-				<div class="flex items-start justify-between gap-3">
+{#if activeTab === 'spider'}
+	<section class="admin-panel card card--no-lift mt-6 p-6" role="tabpanel">
+		<h2 class="section-title">Fiche de l’occupante</h2>
+		<form class="mt-6 space-y-4" onsubmit={saveSpider}>
+			<label class="field">
+				<span class="field-label">Prénom / surnom</span>
+				<input class="field-input" bind:value={spider.name} required />
+			</label>
+			<label class="field">
+				<span class="field-label">Nom commun</span>
+				<input class="field-input" bind:value={spider.commonName} />
+			</label>
+			<label class="field">
+				<span class="field-label">Nom scientifique</span>
+				<input class="field-input" bind:value={spider.scientificName} required />
+			</label>
+			<label class="field">
+				<span class="field-label">Date d’emménagement</span>
+				<input class="field-input" type="date" bind:value={spider.movedInDate} required />
+			</label>
+			<label class="field">
+				<span class="field-label">Notes d’espèce</span>
+				<textarea class="field-input min-h-28" bind:value={spider.speciesNotes}></textarea>
+			</label>
+			<button type="submit" class="btn-primary">Enregistrer la fiche</button>
+		</form>
+	</section>
+{/if}
+
+{#if activeTab === 'token'}
+	<section class="admin-panel card card--no-lift mt-6 p-6" role="tabpanel">
+		<h2 class="section-title">Token sondes Shelly</h2>
+		<p class="section-subtitle mt-1">
+			Paramètre <code class="text-[var(--color-accent)]">token</code> dans l’URL HTTP de la Shelly
+		</p>
+		{#if hasIotToken && iotMasked}
+			<p class="mt-4 font-mono text-sm">{iotMasked}</p>
+		{:else}
+			<p class="mt-4 text-sm text-[var(--color-muted)]">Aucun token en base (repli .env possible)</p>
+		{/if}
+		{#if iotToken}
+			<p class="mt-2 break-all font-mono text-xs text-[var(--color-accent)]">{iotToken}</p>
+			<button type="button" class="btn-secondary mt-2" onclick={copyToken}>Copier le token</button>
+		{/if}
+		<button type="button" class="btn-primary mt-4" onclick={generateToken}>
+			Générer un token (32 car.)
+		</button>
+	</section>
+{/if}
+
+{#if activeTab === 'molts'}
+	<section class="admin-panel card card--no-lift mt-6 p-6" role="tabpanel">
+		<h2 class="section-title">Mues</h2>
+		<form class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end" onsubmit={addMolt}>
+			<label class="field flex-1">
+				<span class="field-label">Nom</span>
+				<input class="field-input" bind:value={newMoltName} placeholder="Mue L5…" required />
+			</label>
+			<label class="field">
+				<span class="field-label">Date</span>
+				<input class="field-input" type="date" bind:value={newMoltDate} required />
+			</label>
+			<button type="submit" class="btn-primary inline-flex items-center gap-2 sm:mb-0.5">
+				<Plus size={18} weight="bold" />
+				Ajouter
+			</button>
+		</form>
+		<ul class="mt-6 space-y-2">
+			{#each molts as molt (molt.id)}
+				<li
+					class="flex items-center justify-between gap-3 rounded-lg border border-[var(--color-border)] px-4 py-3"
+				>
 					<div>
+						<p class="font-medium">{molt.name}</p>
 						<p class="text-xs text-[var(--color-muted)]">
-							{dateFormatter.format(new Date(item.publishedAt))}
+							{dateFormatter.format(new Date(molt.moltDate))}
 						</p>
-						<p class="font-semibold">{item.title}</p>
-						<p class="mt-2 text-sm text-[var(--color-muted)] line-clamp-3">{item.body}</p>
 					</div>
 					<button
 						type="button"
-						class="btn-icon shrink-0 text-red-400"
-						onclick={() => deleteNews(item.id)}
+						class="btn-icon text-red-400"
+						onclick={() => deleteMolt(molt.id)}
 						aria-label="Supprimer"
 					>
 						<Trash size={18} />
 					</button>
-				</div>
-			</li>
-		{:else}
-			<p class="text-sm text-[var(--color-muted)]">Aucune actualité.</p>
-		{/each}
-	</ul>
-</section>
+				</li>
+			{:else}
+				<p class="text-sm text-[var(--color-muted)]">Aucune mue enregistrée.</p>
+			{/each}
+		</ul>
+	</section>
+{/if}
 
-<section class="card p-6">
-	<h2 class="section-title">Compte admin</h2>
-	<form class="mt-4 space-y-4" onsubmit={changePassword}>
-		<label class="field">
-			<span class="field-label">Mot de passe actuel</span>
-			<input class="field-input" type="password" bind:value={currentPassword} required />
-		</label>
-		<label class="field">
-			<span class="field-label">Nouveau mot de passe</span>
-			<input class="field-input" type="password" bind:value={newPassword} minlength="8" required />
-		</label>
-		<label class="field">
-			<span class="field-label">Confirmer</span>
-			<input class="field-input" type="password" bind:value={confirmPassword} minlength="8" required />
-		</label>
-		<button type="submit" class="btn-primary">Changer le mot de passe</button>
-	</form>
-</section>
+{#if activeTab === 'news'}
+	<section class="admin-panel card card--no-lift mt-6 p-6" role="tabpanel">
+		<h2 class="section-title">Actualités</h2>
+		<form class="mt-4 space-y-4" onsubmit={addNews}>
+			<label class="field">
+				<span class="field-label">Titre</span>
+				<input class="field-input" bind:value={newsTitle} required />
+			</label>
+			<label class="field">
+				<span class="field-label">Contenu</span>
+				<textarea class="field-input min-h-28" bind:value={newsBody} required></textarea>
+			</label>
+			<button type="submit" class="btn-primary">Publier</button>
+		</form>
+		<ul class="mt-8 space-y-3">
+			{#each news as item (item.id)}
+				<li class="rounded-lg border border-[var(--color-border)] p-4">
+					<div class="flex items-start justify-between gap-3">
+						<div>
+							<p class="text-xs text-[var(--color-muted)]">
+								{dateFormatter.format(new Date(item.publishedAt))}
+							</p>
+							<p class="font-semibold">{item.title}</p>
+							<p class="mt-2 line-clamp-3 text-sm text-[var(--color-muted)]">{item.body}</p>
+						</div>
+						<button
+							type="button"
+							class="btn-icon shrink-0 text-red-400"
+							onclick={() => deleteNews(item.id)}
+							aria-label="Supprimer"
+						>
+							<Trash size={18} />
+						</button>
+					</div>
+				</li>
+			{:else}
+				<p class="text-sm text-[var(--color-muted)]">Aucune actualité.</p>
+			{/each}
+		</ul>
+	</section>
+{/if}
 
+{#if activeTab === 'account'}
+	<section class="admin-panel card card--no-lift mt-6 p-6" role="tabpanel">
+		<h2 class="section-title">Compte admin</h2>
+		<p class="section-subtitle mt-1">Connecté en tant que <strong>{data.user.username}</strong></p>
+		<form class="mt-4 space-y-4" onsubmit={changePassword}>
+			<label class="field">
+				<span class="field-label">Mot de passe actuel</span>
+				<input class="field-input" type="password" bind:value={currentPassword} required />
+			</label>
+			<label class="field">
+				<span class="field-label">Nouveau mot de passe</span>
+				<input
+					class="field-input"
+					type="password"
+					bind:value={newPassword}
+					minlength="8"
+					required
+				/>
+			</label>
+			<label class="field">
+				<span class="field-label">Confirmer</span>
+				<input
+					class="field-input"
+					type="password"
+					bind:value={confirmPassword}
+					minlength="8"
+					required
+				/>
+			</label>
+			<button type="submit" class="btn-primary">Changer le mot de passe</button>
+		</form>
+	</section>
+{/if}

@@ -14,10 +14,15 @@
 
 <section class="animate-fade-up animate-delay-1 px-6 py-14 sm:px-10 lg:px-16">
 	<div class="mx-auto max-w-5xl">
-		<h2 class="section-title">Fiche de l’occupante</h2>
-		<p class="section-subtitle">Identité et date d’emménagement</p>
+		<div class="mb-8 flex items-center gap-3">
+			<Bug size={28} weight="duotone" class="text-[var(--color-accent)]" />
+			<div>
+				<h2 class="section-title">Fiche de l’occupante</h2>
+				<p class="section-subtitle">Identité et date d’emménagement</p>
+			</div>
+		</div>
 
-		<div class="mt-8 grid gap-5 sm:grid-cols-2">
+		<div class="grid gap-5 sm:grid-cols-2">
 			<article class="card p-6">
 				<div class="mb-4 flex items-center gap-3 text-[var(--color-accent)]">
 					<Bug size={28} weight="duotone" />

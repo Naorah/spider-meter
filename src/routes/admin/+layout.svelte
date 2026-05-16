@@ -25,7 +25,7 @@
 </header>
 
 <main class="px-6 py-10 sm:px-10">
-	<div class="mx-auto max-w-3xl space-y-10">
+	<div class="mx-auto max-w-3xl space-y-6">
 		{@render children()}
 	</div>
 </main>
