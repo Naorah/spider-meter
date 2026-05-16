@@ -61,7 +61,7 @@
 			<div>
 				<h2 class="section-title">Historique</h2>
 				<p class="section-subtitle">
-					Dernières lectures — mise à jour automatique toutes les 30&nbsp;s
+					Dernières lectures —
 				</p>
 			</div>
 		</div>

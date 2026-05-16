@@ -17,7 +17,7 @@
 <section class="animate-fade-up animate-delay-2 px-6 py-14 sm:px-10 lg:px-16">
 	<div class="mx-auto max-w-5xl">
 		<h2 class="section-title">Habitat actuel</h2>
-		<p class="section-subtitle">Conditions en temps réel — mise à jour automatique toutes les 30&nbsp;s</p>
+		<p class="section-subtitle">Conditions en temps réel —</p>
 
 		{#if latest}
 			<div class="mt-8 grid gap-5 sm:grid-cols-3">
