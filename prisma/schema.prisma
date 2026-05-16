@@ -1,0 +1,19 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/lib/server/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model SensorReading {
+  id          Int      @id @default(autoincrement())
+  deviceId    String   @map("device_id")
+  humidity    Float
+  temperature Float
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt(sort: Desc)])
+  @@map("sensor_readings")
+}

@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@theme {
+	--color-bg: #0f0f12;
+	--color-bg-elevated: #1a1a22;
+	--color-border: #2e2e3a;
+	--color-text: #e8e6e3;
+	--color-muted: #9b98a8;
+	--color-accent: #c9a227;
+	--color-accent-dim: #8a7020;
+	--color-humidity: #5ec4e8;
+	--color-temperature: #e8a85e;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	font-family:
+		system-ui,
+		-apple-system,
+		"Segoe UI",
+		Roboto,
+		"Helvetica Neue",
+		Arial,
+		sans-serif;
+	-webkit-font-smoothing: antialiased;
+}
+
+@keyframes fade-up {
+	from {
+		opacity: 0;
+		transform: translateY(1.25rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.animate-fade-up {
+	animation: fade-up 0.7s ease-out both;
+}
+
+.animate-delay-1 {
+	animation-delay: 0.1s;
+}
+.animate-delay-2 {
+	animation-delay: 0.2s;
+}
+.animate-delay-3 {
+	animation-delay: 0.3s;
+}
+.animate-delay-4 {
+	animation-delay: 0.4s;
+}
+
+.card {
+	background: color-mix(in srgb, var(--color-bg-elevated) 85%, transparent);
+	border: 1px solid var(--color-border);
+	border-radius: 1rem;
+	backdrop-filter: blur(8px);
+	transition:
+		transform 0.25s ease,
+		border-color 0.25s ease,
+		box-shadow 0.25s ease;
+}
+
+.card:hover {
+	transform: scale(1.02);
+	border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+	box-shadow: 0 12px 40px -12px color-mix(in srgb, var(--color-accent) 25%, transparent);
+}
+
+.section-title {
+	font-size: 1.5rem;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+	color: var(--color-text);
+}
+
+.section-subtitle {
+	color: var(--color-muted);
+	font-size: 0.95rem;
+	margin-top: 0.25rem;
+}

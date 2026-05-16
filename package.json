@@ -1,0 +1,46 @@
+{
+	"name": "spider-meter",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "prisma generate && vite build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync && prisma generate || echo ''",
+		"postinstall": "prisma generate",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"db:migrate": "prisma migrate dev",
+		"db:generate": "prisma generate",
+		"start": "node build/index.js",
+		"pm2:start": "pm2 start ecosystem.config.cjs",
+		"pm2:stop": "pm2 stop spider-meter",
+		"pm2:restart": "pm2 restart spider-meter",
+		"pm2:logs": "pm2 logs spider-meter"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-auto": "^7.0.1",
+		"@sveltejs/adapter-node": "^5.5.4",
+		"@sveltejs/kit": "^2.57.0",
+		"@sveltejs/vite-plugin-svelte": "^7.0.0",
+		"@types/better-sqlite3": "^7.6.13",
+		"chartjs-adapter-date-fns": "^3.0.0",
+		"prisma": "^7.8.0",
+		"svelte": "^5.55.2",
+		"svelte-check": "^4.4.6",
+		"typescript": "^6.0.2",
+		"vite": "^8.0.7"
+	},
+	"dependencies": {
+		"@prisma/adapter-better-sqlite3": "^7.8.0",
+		"@prisma/client": "^7.8.0",
+		"@tailwindcss/vite": "^4.3.0",
+		"better-sqlite3": "^12.10.0",
+		"chart.js": "^4.5.1",
+		"date-fns": "^4.1.0",
+		"dotenv": "^16.5.0",
+		"phosphor-svelte": "^3.1.0",
+		"tailwindcss": "^4.3.0"
+	}
+}
