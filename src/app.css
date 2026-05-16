@@ -75,6 +75,24 @@ body {
 	box-shadow: 0 12px 40px -12px color-mix(in srgb, var(--color-accent) 25%, transparent);
 }
 
+/* Cartes timeline mues : survol sans scale (le point reste fixe) */
+.card--no-lift {
+	transition:
+		border-color 0.25s ease,
+		box-shadow 0.25s ease,
+		background 0.25s ease;
+}
+
+.card--no-lift:hover {
+	transform: none;
+	border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+	box-shadow: 0 12px 40px -12px color-mix(in srgb, var(--color-accent) 25%, transparent);
+}
+
+.molt-timeline-dot {
+	left: calc(-1.5rem - 1px);
+}
+
 .section-title {
 	font-size: 1.5rem;
 	font-weight: 600;

@@ -24,14 +24,17 @@
 
 			<ol class="relative space-y-4 border-l border-[var(--color-border)] pl-6">
 				{#each molts as molt (molt.id)}
-					<li class="card relative p-5">
+					<li class="relative">
 						<span
-							class="absolute -left-[1.85rem] top-6 h-3 w-3 rounded-full bg-[var(--color-accent)]"
+							class="molt-timeline-dot pointer-events-none absolute top-6 z-10 h-3 w-3 -translate-x-1/2 rounded-full bg-[var(--color-accent)] ring-4 ring-[var(--color-bg)]"
+							aria-hidden="true"
 						></span>
-						<p class="font-semibold">{molt.name}</p>
-						<p class="mt-1 text-sm text-[var(--color-muted)]">
-							{dateFormatter.format(new Date(molt.moltDate))}
-						</p>
+						<article class="card card--no-lift p-5">
+							<p class="font-semibold">{molt.name}</p>
+							<p class="mt-1 text-sm text-[var(--color-muted)]">
+								{dateFormatter.format(new Date(molt.moltDate))}
+							</p>
+						</article>
 					</li>
 				{/each}
 			</ol>
