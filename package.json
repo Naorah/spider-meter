@@ -8,7 +8,7 @@
 		"build": "prisma generate && vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync && prisma generate || echo ''",
-		"postinstall": "prisma generate",
+		"postinstall": "svelte-kit sync && prisma generate",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"db:migrate": "prisma migrate dev",
