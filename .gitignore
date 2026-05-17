@@ -27,3 +27,6 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+python-pylon/venv/
+python-pylon/__pycache__/
+

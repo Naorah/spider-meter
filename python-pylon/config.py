@@ -1,0 +1,2 @@
+SPIDER_METER_URL = "http://localhost:5173"
+SPIDER_METER_TOKEN = "123456789"

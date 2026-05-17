@@ -1,8 +1,13 @@
 import json
 import socket
+import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import datetime
 
 from flask import Flask, request
+
+from config import SPIDER_METER_TOKEN, SPIDER_METER_URL
 
 app = Flask(__name__)
 
@@ -78,12 +83,74 @@ def log_report(method: str, path: str, params: dict[str, str]) -> None:
   print("\n".join(lines), flush=True)
 
 
+def parse_float(value: str | None) -> float | None:
+  if value is None or not str(value).strip():
+    return None
+  try:
+    n = float(value)
+  except ValueError:
+    return None
+  return n if n == n else None  # reject NaN
+
+
+def extract_report_fields(params: dict[str, str]) -> tuple[float, float, str] | None:
+  humidity = parse_float(params.get("hum"))
+  temperature = parse_float(params.get("temp")) or parse_float(params.get("tmp"))
+  if humidity is None or temperature is None:
+    return None
+  device_id = (params.get("id") or "unknown").strip() or "unknown"
+  return humidity, temperature, device_id
+
+
+def forward_report_to_spider_meter(
+  humidity: float, temperature: float, device_id: str
+) -> None:
+  base = SPIDER_METER_URL.rstrip("/")
+  query = urllib.parse.urlencode(
+    {
+      "hum": humidity,
+      "temp": temperature,
+      "id": device_id,
+      "token": SPIDER_METER_TOKEN,
+    }
+  )
+  url = f"{base}/report?{query}"
+  try:
+    with urllib.request.urlopen(url, timeout=10) as resp:
+      body = resp.read(256).decode("utf-8", errors="replace").strip()
+      print(
+        f"[spider-meter] {resp.status} {url.split('token=', 1)[0]}token=[redacted]"
+        + (f" → {body!r}" if body else ""),
+        flush=True,
+      )
+  except urllib.error.HTTPError as exc:
+    detail = exc.read(256).decode("utf-8", errors="replace").strip()
+    print(
+      f"[spider-meter] ERREUR HTTP {exc.code} pour /report"
+      + (f" : {detail}" if detail else ""),
+      flush=True,
+    )
+  except urllib.error.URLError as exc:
+    print(f"[spider-meter] ERREUR reseau : {exc.reason}", flush=True)
+
+
 @app.route("/", methods=["GET", "POST"])
 @app.route("/<path:subpath>", methods=["GET", "POST"])
 def shelly_report(subpath: str = "") -> tuple[str, int]:
   path = request.full_path if request.query_string else request.path
   params = collect_params()
   log_report(request.method, path, params)
+
+  if request.path.rstrip("/") == "/report":
+    fields = extract_report_fields(params)
+    if fields is None:
+      print(
+        "[spider-meter] Report ignore : hum et temp/tmp numeriques requis",
+        flush=True,
+      )
+    else:
+      forward_report_to_spider_meter(*fields)
+
   return "OK", 200
 
 
