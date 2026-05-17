@@ -15,7 +15,7 @@
 		"db:deploy": "prisma migrate deploy",
 		"db:seed": "npx tsx prisma/seed.ts",
 		"db:generate": "prisma generate",
-		"start": "node build/index.js",
+		"start": "node --import dotenv/config build/index.js",
 		"pm2:start": "pm2 start ecosystem.config.cjs",
 		"pm2:stop": "pm2 stop spider-meter",
 		"pm2:restart": "pm2 restart spider-meter",

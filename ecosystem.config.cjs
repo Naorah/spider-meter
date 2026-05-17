@@ -18,6 +18,18 @@ if (!IOT_SERVER_TOKEN) {
 	console.warn('[ecosystem] IOT_SERVER_TOKEN manquant — définissez-le dans .env');
 }
 
+const WEAK_SESSION_SECRETS = new Set([
+	'dev-insecure-change-me',
+	'change-me-long-random-string',
+	'change-me'
+]);
+if (!SESSION_SECRET || WEAK_SESSION_SECRETS.has(SESSION_SECRET)) {
+	console.error(
+		'[ecosystem] SESSION_SECRET manquant ou faible dans .env — le serveur refusera de démarrer en production.'
+	);
+	process.exit(1);
+}
+
 /** @type {import('pm2').StartOptions} */
 module.exports = {
 	apps: [

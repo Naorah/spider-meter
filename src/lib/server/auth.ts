@@ -18,16 +18,26 @@ type SessionPayload = {
 	exp: number;
 };
 
+function readSessionSecret(): string | undefined {
+	const raw = process.env.SESSION_SECRET ?? env.SESSION_SECRET;
+	return raw?.trim() || undefined;
+}
+
 function getSecret(): string {
-	return env.SESSION_SECRET || DEV_SESSION_SECRET;
+	return readSessionSecret() || DEV_SESSION_SECRET;
 }
 
 export function assertProductionSecrets(): void {
 	if (process.env.NODE_ENV !== 'production') return;
-	const secret = env.SESSION_SECRET?.trim();
-	if (!secret || WEAK_SESSION_SECRETS.has(secret)) {
+	const secret = readSessionSecret();
+	if (!secret) {
 		throw new Error(
-			'SESSION_SECRET must be set to a strong random value in production (see .env.example).'
+			'SESSION_SECRET est absent en production. Ajoutez-le dans .env (ou dans env PM2) puis redémarrez.'
+		);
+	}
+	if (WEAK_SESSION_SECRETS.has(secret)) {
+		throw new Error(
+			'SESSION_SECRET est trop faible en production. Utilisez une valeur longue et aléatoire (voir .env.example).'
 		);
 	}
 }
