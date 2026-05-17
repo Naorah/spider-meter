@@ -5,9 +5,23 @@ import {
 	createAdminUser,
 	setSessionCookie
 } from '$lib/server/auth';
+import { checkRateLimit, clientRateLimitKey } from '$lib/server/rate-limit';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST: RequestHandler = async (event) => {
+	const { request, cookies } = event;
+
+	const rate = checkRateLimit(clientRateLimitKey(event, 'auth-login'), {
+		limit: 10,
+		windowMs: 15 * 60 * 1000
+	});
+	if (!rate.allowed) {
+		return json(
+			{ message: 'Trop de tentatives. Réessayez plus tard.' },
+			{ status: 429, headers: { 'Retry-After': String(rate.retryAfterSec) } }
+		);
+	}
+
 	const body = await request.json().catch(() => null);
 	const username = typeof body?.username === 'string' ? body.username.trim() : '';
 	const password = typeof body?.password === 'string' ? body.password : '';
@@ -26,7 +40,10 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 			return json({ ok: true, bootstrapped: true });
 		}
 		return json(
-			{ message: 'Aucun compte admin. Utilisez /api/auth/setup ou les variables ADMIN_*.' },
+			{
+				message:
+					'Aucun compte admin. Créez le premier compte via le bouton Admin (configuration initiale).'
+			},
 			{ status: 403 }
 		);
 	}

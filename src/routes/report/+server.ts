@@ -1,10 +1,12 @@
 import { prisma } from '$lib/server/db';
-import { getIotToken } from '$lib/server/settings';
+import { checkRateLimit, clientRateLimitKey } from '$lib/server/rate-limit';
 import {
 	logReportRequest,
 	sanitizeSearchParams,
 	type ReportLogEntry
 } from '$lib/server/report-logger';
+import { getIotToken } from '$lib/server/settings';
+import { tokensMatch } from '$lib/server/token-auth';
 import { error, text } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -28,9 +30,22 @@ export const GET: RequestHandler = async (event) => {
 	const { url } = event;
 	const ctx = requestContext(event);
 
+	const rate = checkRateLimit(clientRateLimitKey(event, 'report'), {
+		limit: 120,
+		windowMs: 60 * 1000
+	});
+	if (!rate.allowed) {
+		logReportRequest({
+			...ctx,
+			status: 'rate_limited',
+			message: 'Limite de débit dépassée'
+		});
+		error(429, 'Too Many Requests');
+	}
+
 	const expectedToken = await getIotToken();
 	const token = url.searchParams.get('token');
-	if (!expectedToken || !token || token !== expectedToken) {
+	if (!expectedToken || !token || !tokensMatch(expectedToken, token)) {
 		logReportRequest({
 			...ctx,
 			status: 'unauthorized',

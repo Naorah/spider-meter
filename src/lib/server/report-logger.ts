@@ -43,7 +43,7 @@ export const reportLogger = pino(
 	pino.multistream(streams)
 );
 
-export type ReportLogStatus = 'success' | 'unauthorized' | 'invalid_params';
+export type ReportLogStatus = 'success' | 'unauthorized' | 'invalid_params' | 'rate_limited';
 
 export type ReportLogEntry = {
 	status: ReportLogStatus;

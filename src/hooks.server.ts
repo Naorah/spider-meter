@@ -1,5 +1,7 @@
-import { getSessionUser } from '$lib/server/auth';
+import { assertProductionSecrets, getSessionUser } from '$lib/server/auth';
 import { redirect, type Handle } from '@sveltejs/kit';
+
+assertProductionSecrets();
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const { pathname } = event.url;

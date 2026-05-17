@@ -1,5 +1,5 @@
 import { prisma } from '$lib/server/db';
-import type { MoltDto, NewsItemDto, SpiderProfileDto } from '$lib/types';
+import type { MoltDto, NewsItemDto, NewsItemSummaryDto, SpiderProfileDto } from '$lib/types';
 
 const dateLabelFormatter = new Intl.DateTimeFormat('fr-FR', {
 	day: 'numeric',
@@ -65,12 +65,25 @@ export async function getNewsHistory(limit = 20): Promise<NewsItemDto[]> {
 	}));
 }
 
+export async function getNewsHistorySummaries(limit = 20): Promise<NewsItemSummaryDto[]> {
+	const rows = await prisma.newsItem.findMany({
+		orderBy: { publishedAt: 'desc' },
+		take: limit,
+		select: { id: true, title: true, publishedAt: true }
+	});
+	return rows.map((r) => ({
+		id: r.id,
+		title: r.title,
+		publishedAt: r.publishedAt.toISOString()
+	}));
+}
+
 export async function getPublicContent() {
 	const [spider, molts, latestNews, newsHistory] = await Promise.all([
 		getSpiderProfile(),
 		getMolts(),
 		getLatestNews(),
-		getNewsHistory(10)
+		getNewsHistorySummaries(10)
 	]);
 
 	return { spider, molts, latestNews, newsHistory };

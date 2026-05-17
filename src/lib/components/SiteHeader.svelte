@@ -8,17 +8,20 @@
 	let needsSetup = $state(false);
 	let redirectTo = $state('/admin');
 
-	onMount(async () => {
-		const res = await fetch('/api/auth/status');
+	async function openLoginModal() {
+		const res = await fetch('/api/auth/setup');
 		if (res.ok) {
 			const data = await res.json();
-			needsSetup = data.needsSetup;
+			needsSetup = Boolean(data.available);
 		}
+		loginOpen = true;
+	}
 
+	onMount(async () => {
 		const params = page.url.searchParams;
 		if (params.get('login') === '1') {
-			loginOpen = true;
 			redirectTo = params.get('redirect') || '/admin';
+			await openLoginModal();
 		}
 	});
 </script>
@@ -31,7 +34,7 @@
 		<button
 			type="button"
 			class="btn-secondary inline-flex items-center gap-2"
-			onclick={() => (loginOpen = true)}
+			onclick={openLoginModal}
 		>
 			<Gear size={18} weight="duotone" />
 			Admin

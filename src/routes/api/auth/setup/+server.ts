@@ -1,7 +1,36 @@
 import { countAdmins, createAdminUser, setSessionCookie } from '$lib/server/auth';
+import { checkRateLimit, clientRateLimitKey } from '$lib/server/rate-limit';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const GET: RequestHandler = async (event) => {
+	const rate = checkRateLimit(clientRateLimitKey(event, 'auth-setup-get'), {
+		limit: 30,
+		windowMs: 60 * 1000
+	});
+	if (!rate.allowed) {
+		return json(
+			{ message: 'Trop de tentatives. Réessayez plus tard.' },
+			{ status: 429, headers: { 'Retry-After': String(rate.retryAfterSec) } }
+		);
+	}
+
+	const adminCount = await countAdmins();
+	return json({ available: adminCount === 0 });
+};
+
+export const POST: RequestHandler = async (event) => {
+	const { request, cookies } = event;
+	const rate = checkRateLimit(clientRateLimitKey(event, 'auth-setup'), {
+		limit: 5,
+		windowMs: 60 * 60 * 1000
+	});
+	if (!rate.allowed) {
+		return json(
+			{ message: 'Trop de tentatives. Réessayez plus tard.' },
+			{ status: 429, headers: { 'Retry-After': String(rate.retryAfterSec) } }
+		);
+	}
+
 	const adminCount = await countAdmins();
 	if (adminCount > 0) {
 		return json({ message: 'Un compte admin existe déjà' }, { status: 403 });

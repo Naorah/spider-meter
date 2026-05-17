@@ -29,4 +29,5 @@ vite.config.ts.timestamp-*
 
 python-pylon/venv/
 python-pylon/__pycache__/
+python-pylon/config_local.py
 

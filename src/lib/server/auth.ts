@@ -6,6 +6,12 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 const SESSION_COOKIE = 'session';
 const SESSION_DAYS = 7;
+const DEV_SESSION_SECRET = 'dev-insecure-change-me';
+const WEAK_SESSION_SECRETS = new Set([
+	DEV_SESSION_SECRET,
+	'change-me-long-random-string',
+	'change-me'
+]);
 
 type SessionPayload = {
 	userId: number;
@@ -13,7 +19,17 @@ type SessionPayload = {
 };
 
 function getSecret(): string {
-	return env.SESSION_SECRET || 'dev-insecure-change-me';
+	return env.SESSION_SECRET || DEV_SESSION_SECRET;
+}
+
+export function assertProductionSecrets(): void {
+	if (process.env.NODE_ENV !== 'production') return;
+	const secret = env.SESSION_SECRET?.trim();
+	if (!secret || WEAK_SESSION_SECRETS.has(secret)) {
+		throw new Error(
+			'SESSION_SECRET must be set to a strong random value in production (see .env.example).'
+		);
+	}
 }
 
 export async function hashPassword(password: string): Promise<string> {

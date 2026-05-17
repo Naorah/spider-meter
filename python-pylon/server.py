@@ -11,6 +11,8 @@ from config import SPIDER_METER_TOKEN, SPIDER_METER_URL
 
 app = Flask(__name__)
 
+REDACTED = "[redacted]"
+
 
 def local_ip() -> str:
   try:
@@ -53,6 +55,13 @@ def collect_params() -> dict[str, str]:
   return params
 
 
+def sanitize_params(params: dict[str, str]) -> dict[str, str]:
+  return {
+    key: REDACTED if key.lower() == "token" else value
+    for key, value in params.items()
+  }
+
+
 def log_report(method: str, path: str, params: dict[str, str]) -> None:
   sep = "=" * 60
   headers = dict(request.headers)
@@ -66,7 +75,7 @@ def log_report(method: str, path: str, params: dict[str, str]) -> None:
     "--- Parametres ---",
   ]
   if params:
-    lines.extend(f"  {key!r} = {params[key]!r}" for key in sorted(params))
+    lines.extend(f"  {key!r} = {params[key]!r}" for key in sorted(params, key=str.lower))
   else:
     lines.append("  (aucun)")
 
@@ -137,9 +146,9 @@ def forward_report_to_spider_meter(
 @app.route("/", methods=["GET", "POST"])
 @app.route("/<path:subpath>", methods=["GET", "POST"])
 def shelly_report(subpath: str = "") -> tuple[str, int]:
-  path = request.full_path if request.query_string else request.path
+  path = request.path
   params = collect_params()
-  log_report(request.method, path, params)
+  log_report(request.method, path, sanitize_params(params))
 
   if request.path.rstrip("/") == "/report":
     fields = extract_report_fields(params)
@@ -155,6 +164,14 @@ def shelly_report(subpath: str = "") -> tuple[str, int]:
 
 
 if __name__ == "__main__":
+  if not SPIDER_METER_TOKEN:
+    print(
+      "ERREUR : SPIDER_METER_TOKEN manquant. "
+      "Definissez-le dans config.local.py (voir config.example.py) ou en variable d'environnement.",
+      flush=True,
+    )
+    raise SystemExit(1)
+
   port = 8080
   if not port_is_free(port):
     print(f"ERREUR : le port {port} est deja utilise.", flush=True)

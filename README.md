@@ -38,12 +38,17 @@ Shelly H&T  ──GET /report──►  python-pylon (:8080, LAN)
 2. **python-pylon** journalise la requête, extrait `hum`, `temp` (ou `tmp`) et `id`, puis appelle Spider-Meter avec le token configuré.
 3. Spider-Meter enregistre la lecture comme pour un appel direct.
 
-**Configuration** ([`python-pylon/config.py`](python-pylon/config.py)) :
+**Configuration** — ne pas committer de secrets. Copier [`python-pylon/config.example.py`](python-pylon/config.example.py) vers `config.local.py` (gitignoré) **ou** exporter les variables d’environnement :
 
 | Variable | Description |
 |----------|-------------|
 | `SPIDER_METER_URL` | URL de base du site (ex. `http://localhost:5173` en dev, `https://votre-domaine.fr` en prod). Utiliser `localhost` plutôt que `127.0.0.1` si Vite n’écoute qu’en IPv6. |
-| `SPIDER_METER_TOKEN` | Même valeur que `IOT_SERVER_TOKEN` (ou le token généré dans `/admin`) |
+| `SPIDER_METER_TOKEN` | Même valeur que `IOT_SERVER_TOKEN` (ou le token généré dans `/admin`) — **obligatoire** au démarrage |
+
+```bash
+cd python-pylon
+cp config.example.py config.local.py   # puis éditer SPIDER_METER_TOKEN
+```
 
 **Démarrage** (sur la machine du même réseau que la Shelly) :
 
@@ -54,6 +59,8 @@ python -m venv venv
 pip install flask
 python server.py
 ```
+
+Les logs console masquent le paramètre `token` ; l’URL complète avec query n’est pas journalisée.
 
 Le serveur affiche l’URL locale à configurer dans la Shelly. En production, faire tourner le relais en service (systemd, PM2, tâche planifiée) sur un PC ou Raspberry Pi toujours allumé sur le LAN.
 
@@ -99,8 +106,8 @@ Copier [`.env.example`](.env.example) vers `.env` à la racine du projet.
 |----------|-------------|-------------|
 | `DATABASE_URL` | Oui | URL SQLite Prisma. Ex. `file:./dev.db` (dev) ou chemin **absolu** en prod : `file:/opt/spider-meter/data/spider.db` |
 | `IOT_SERVER_TOKEN` | Repli | Utilisé si aucun token n’a été généré depuis `/admin` |
-| `SESSION_SECRET` | Oui (prod) | Signature du cookie de session admin |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Non | Bootstrap du **premier** compte admin si la BDD est vide |
+| `SESSION_SECRET` | **Oui (prod)** | Signature du cookie de session admin — valeur longue et aléatoire ; le serveur **refuse de démarrer** en production si absent ou faible |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Non | Bootstrap du **premier** compte admin si la BDD est vide (à retirer après création du compte) |
 | `CHART_READINGS_LIMIT` | Non | Legacy / fallback interne |
 | `PORT` | Non | Port du serveur Node en prod (défaut PM2 : `1212`) |
 | `HOST` | Non | Interface d’écoute (défaut : `0.0.0.0`) |
@@ -132,10 +139,12 @@ IOT_SERVER_TOKEN="repli-shelly-si-pas-de-token-admin"
 
 Le token IoT généré remplace `IOT_SERVER_TOKEN` pour `/report` tant qu’il est en base.
 
-### Premier compte admin
+### Premier compte admin (sécurité)
 
-- Soit variables `ADMIN_USERNAME` + `ADMIN_PASSWORD` dans `.env` au premier login.
-- Soit formulaire de création affiché dans la modale si aucun admin n’existe.
+1. **Avant d’exposer le site sur Internet**, créer le compte admin (bouton **Admin** → formulaire de configuration initiale, ou variables `ADMIN_USERNAME` / `ADMIN_PASSWORD` dans `.env` pour un seul login bootstrap).
+2. Retirer ou commenter `ADMIN_USERNAME` / `ADMIN_PASSWORD` dans `.env` une fois le compte créé.
+3. L’API publique `/api/auth/status` n’indique plus si l’instance est « vierge » ; la disponibilité du setup n’est interrogée qu’à l’ouverture de la modale de connexion (`GET /api/auth/setup`).
+4. Limite de débit sur login, setup et `/report` (par adresse IP).
 
 ### Image hero et meta
 
@@ -270,9 +279,31 @@ npm run pm2:restart    # après un déploiement
 
 Exposer **HTTPS** sur le port 443 et proxy vers `http://127.0.0.1:1212` (ou votre `PORT`). La Shelly doit pouvoir joindre `https://votre-domaine/report?...`.
 
-### 5. Sauvegardes
+**Ne pas logger le token IoT** dans les logs du proxy : la Shelly envoie `token=` en query string sur `/report`.
 
-Sauvegarder régulièrement le fichier SQLite pointé par `DATABASE_URL` (ex. `data/spider.db`).
+Exemple **Caddy** (logs sans query) :
+
+```caddy
+spider-meter.example.com {
+	reverse_proxy 127.0.0.1:1212
+	log {
+		format filter {
+			request>uri query {
+				token replace "[redacted]"
+			}
+		}
+	}
+}
+```
+
+Exemple **Nginx** : utiliser `$uri` plutôt que `$request_uri` dans `access_log`, ou un `map` pour masquer `token=` dans la ligne de log.
+
+### 5. Sauvegardes et fichier SQLite
+
+- Sauvegarder régulièrement le fichier SQLite pointé par `DATABASE_URL` (ex. `data/spider.db`).
+- Restreindre les permissions du fichier et du dossier (`chmod 600` sur la BDD, propriétaire = utilisateur du service Node/PM2).
+- Ne pas archiver `.env` et `*.db` dans la même archive non chiffrée (le token IoT est en clair dans les deux).
+- En cas de fuite de backup, régénérer le token IoT depuis `/admin` et mettre à jour la Shelly / `python-pylon`.
 
 ---
 
@@ -303,6 +334,7 @@ Sauvegarder régulièrement le fichier SQLite pointé par `DATABASE_URL` (ex. `d
 | `/api/sensors/chart` | GET | `?range=day\|week\|month&points=10\|20\|50\|100` |
 | `/api/auth/login` | POST | Connexion admin |
 | `/api/auth/logout` | POST | Déconnexion |
+| `/api/auth/setup` | GET | `{ available }` — création initiale possible (appelé à l’ouverture de la modale Admin) |
 | `/api/auth/setup` | POST | Création du premier admin |
 | `/api/admin/*` | * | CRUD contenu (authentifié) |
 

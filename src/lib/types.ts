@@ -37,6 +37,8 @@ export type NewsItemDto = {
 	publishedAt: string;
 };
 
+export type NewsItemSummaryDto = Pick<NewsItemDto, 'id' | 'title' | 'publishedAt'>;
+
 export type ChartRange = 'day' | 'week' | 'month';
 export type ChartPointCount = 10 | 20 | 50 | 100;
 

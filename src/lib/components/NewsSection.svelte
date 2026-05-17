@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { NewsItemDto } from '$lib/types';
+	import type { NewsItemDto, NewsItemSummaryDto } from '$lib/types';
 	import { Newspaper } from 'phosphor-svelte';
 
 	let {
@@ -7,7 +7,7 @@
 		history = []
 	}: {
 		latest: NewsItemDto | null;
-		history?: NewsItemDto[];
+		history?: NewsItemSummaryDto[];
 	} = $props();
 
 	const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
