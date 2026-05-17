@@ -1,5 +1,7 @@
 # Spider-Meter
 
+![Phidippus — araignée sauteuse](static/phidippus-small.jpg)
+
 Landing page et backend léger pour suivre l’habitat d’un terrarium (humidité, température) alimenté par une **Shelly Plus H&T** (ou compatible). Les lectures sont stockées en **SQLite** et affichées en temps réel avec historique graphique.
 
 ## Fonctionnement
@@ -21,6 +23,39 @@ Navigateur  ──GET /───────────────────
 3. La page d’accueil charge les dernières valeurs et l’historique ; le client interroge `/api/sensors` **toutes les 30 secondes** pour mettre à jour l’habitat et les graphiques sans recharger la page.
 
 Les « trous » dans les graphiques sont normaux : ils reflètent les intervalles réels entre deux rapports Shelly.
+
+### Relais python-pylon (réseaux différents)
+
+Quand la **Shelly** et le **site Spider-Meter** ne sont pas sur le même réseau (Shelly sur le Wi‑Fi du terrarium, site hébergé ailleurs ou sur un autre VLAN), un petit serveur **[`python-pylon/`](python-pylon/)** fait relais sur le LAN local :
+
+```text
+Shelly H&T  ──GET /report──►  python-pylon (:8080, LAN)
+                                    │
+                                    └──GET /report?hum&temp&id&token──►  Spider-Meter (URL publique ou dev)
+```
+
+1. La Shelly envoie ses rapports vers l’IP locale du relais, par ex. `http://192.168.x.x:8080/report?hum=…&tmp=…&id=…`.
+2. **python-pylon** journalise la requête, extrait `hum`, `temp` (ou `tmp`) et `id`, puis appelle Spider-Meter avec le token configuré.
+3. Spider-Meter enregistre la lecture comme pour un appel direct.
+
+**Configuration** ([`python-pylon/config.py`](python-pylon/config.py)) :
+
+| Variable | Description |
+|----------|-------------|
+| `SPIDER_METER_URL` | URL de base du site (ex. `http://localhost:5173` en dev, `https://votre-domaine.fr` en prod). Utiliser `localhost` plutôt que `127.0.0.1` si Vite n’écoute qu’en IPv6. |
+| `SPIDER_METER_TOKEN` | Même valeur que `IOT_SERVER_TOKEN` (ou le token généré dans `/admin`) |
+
+**Démarrage** (sur la machine du même réseau que la Shelly) :
+
+```bash
+cd python-pylon
+python -m venv venv
+# Windows : .\venv\Scripts\activate
+pip install flask
+python server.py
+```
+
+Le serveur affiche l’URL locale à configurer dans la Shelly. En production, faire tourner le relais en service (systemd, PM2, tâche planifiée) sur un PC ou Raspberry Pi toujours allumé sur le LAN.
 
 ---
 
@@ -104,8 +139,8 @@ Le token IoT généré remplace `IOT_SERVER_TOKEN` pour `/report` tant qu’il e
 
 ### Image hero et meta
 
-- Photo : [`static/phidippus.jpg`](static/phidippus.jpg)
-- Titre / description Open Graph : [`src/lib/site.ts`](src/lib/site.ts)
+- Photos : [`static/phidippus-small.jpg`](static/phidippus-small.jpg) (affichage rapide), [`static/phidippus-big.jpg`](static/phidippus-big.jpg) (pleine résolution, chargée en différé dans le hero)
+- Titre / description Open Graph : [`src/lib/site.ts`](src/lib/site.ts) (`ogImagePath` → version big)
 
 ### Graphiques publics
 
@@ -296,7 +331,7 @@ tail -f logs/report.log
 | `401` sur `/report` | Vérifier que `token=` dans l’URL Shelly = `IOT_SERVER_TOKEN` dans `.env` |
 | `400` sur `/report` | Vérifier `hum` et `temp` (ou `tmp`) numériques dans l’URL |
 | Pas de données sur la page | Tester `curl /report`, puis `curl /api/sensors` |
-| Embed sans image | Fichier `static/phidippus.jpg` présent + `ORIGIN` correct en prod |
+| Embed sans image | Fichiers `static/phidippus-big.jpg` (et small) présents + `ORIGIN` correct en prod |
 | `prisma migrate deploy` échoue | `DATABASE_URL` défini dans `.env`, dossier parent du `.db` existant |
 | `npm i` échoue sur Prisma | Lancer `npx svelte-kit sync` puis `npx prisma generate` |
 

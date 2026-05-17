@@ -3,7 +3,7 @@ export const site = {
 	title: 'Spider-Meter — Suivi terrarium',
 	description:
 		'Monitoring d’habitat pour arachnide : humidité, température et historique des sondes Shelly.',
-	ogImagePath: '/phidippus.jpg',
+	ogImagePath: '/phidippus-big.jpg',
 	locale: 'fr_FR',
 	twitterCard: 'summary_large_image' as const
 };
