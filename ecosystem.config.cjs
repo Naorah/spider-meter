@@ -8,7 +8,11 @@ const {
 	CHART_READINGS_LIMIT,
 	PORT,
 	HOST,
-	SESSION_SECRET
+	SESSION_SECRET,
+	MINIO_ENDPOINT,
+	MINIO_BUCKET,
+	MINIO_USER,
+	MINIO_PASSWORD
 } = process.env;
 
 if (!DATABASE_URL) {
@@ -16,6 +20,11 @@ if (!DATABASE_URL) {
 }
 if (!IOT_SERVER_TOKEN) {
 	console.warn('[ecosystem] IOT_SERVER_TOKEN manquant — définissez-le dans .env');
+}
+if (!MINIO_ENDPOINT || !MINIO_BUCKET || !MINIO_USER || !MINIO_PASSWORD) {
+	console.warn(
+		'[ecosystem] Configuration MinIO incomplète — définissez MINIO_ENDPOINT, MINIO_BUCKET, MINIO_USER et MINIO_PASSWORD dans .env (galerie indisponible).'
+	);
 }
 
 const WEAK_SESSION_SECRETS = new Set([
@@ -49,7 +58,11 @@ module.exports = {
 				DATABASE_URL,
 				IOT_SERVER_TOKEN,
 				CHART_READINGS_LIMIT: CHART_READINGS_LIMIT || '72',
-				SESSION_SECRET
+				SESSION_SECRET,
+				MINIO_ENDPOINT,
+				MINIO_BUCKET,
+				MINIO_USER,
+				MINIO_PASSWORD
 			},
 			error_file: './logs/pm2-error.log',
 			out_file: './logs/pm2-out.log',
