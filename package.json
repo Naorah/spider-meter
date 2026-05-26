@@ -18,7 +18,8 @@
 		"start": "node --import dotenv/config build/index.js",
 		"pm2:start": "pm2 start ecosystem.config.cjs",
 		"pm2:stop": "pm2 stop spider-meter",
-		"pm2:restart": "pm2 restart spider-meter",
+		"pm2:reload": "pm2 reload ecosystem.config.cjs --update-env",
+		"pm2:restart": "pm2 reload ecosystem.config.cjs --update-env",
 		"pm2:logs": "pm2 logs spider-meter"
 	},
 	"prisma": {

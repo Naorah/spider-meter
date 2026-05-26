@@ -1,6 +1,8 @@
 const path = require('path');
 
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+// Relu uniquement quand PM2 charge ce fichier (start / reload --update-env).
+// `pm2 restart spider-meter` seul ne recharge PAS .env — utiliser npm run pm2:reload.
+require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
 
 const {
 	DATABASE_URL,

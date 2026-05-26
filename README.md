@@ -270,9 +270,11 @@ pm2 startup            # suivre les instructions affichées
 
 Fichier de config : [`ecosystem.config.cjs`](ecosystem.config.cjs) (charge `.env`, lance `build/index.js`).
 
+**Variables d’environnement :** après avoir modifié `.env`, utilisez `npm run pm2:reload` (`pm2 reload ecosystem.config.cjs --update-env`). Un simple `pm2 restart spider-meter` redémarre avec l’ancien environnement mémorisé par PM2.
+
 ```bash
 npm run pm2:logs
-npm run pm2:restart    # après un déploiement
+npm run pm2:reload     # après un déploiement ou modification de .env
 ```
 
 ### 4. Reverse proxy (recommandé)
@@ -317,7 +319,7 @@ Exemple **Nginx** : utiliser `$uri` plutôt que `$request_uri` dans `access_log`
 | `npm run db:migrate` | Migration Prisma en dev |
 | `npm run db:deploy` | Migration Prisma en prod |
 | `npm run pm2:start` | Démarre l’app via PM2 |
-| `npm run pm2:restart` | Redémarre le processus PM2 |
+| `npm run pm2:reload` | Recharge `.env` + redémarre (équivalent `pm2 reload … --update-env`) |
 | `npm run pm2:logs` | Affiche les logs PM2 |
 | `npm run check` | Vérification TypeScript / Svelte |
 
