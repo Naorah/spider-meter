@@ -58,3 +58,23 @@ export type ChartSeriesDto = {
 		aggregated: boolean;
 	};
 };
+
+export type GalleryPhotoDto = {
+	id: number;
+	caption: string;
+	createdAt: string;
+	width: number | null;
+	height: number | null;
+};
+
+export type GalleryPhotoListItemDto = GalleryPhotoDto & {
+	imageUrl: string;
+};
+
+export type GalleryPhotoListDto = {
+	items: GalleryPhotoListItemDto[];
+	total: number;
+	page: number;
+	pageSize: number;
+	totalPages: number;
+};

@@ -12,7 +12,7 @@
 </script>
 
 {#if molts.length > 0}
-	<section class="animate-fade-up animate-delay-4 px-6 py-14 sm:px-10 lg:px-16">
+	<section id="mues" class="animate-fade-up animate-delay-4 scroll-mt-28 px-6 py-14 sm:px-10 lg:px-16">
 		<div class="mx-auto max-w-5xl">
 			<div class="mb-8 flex items-center gap-3">
 				<Butterfly size={28} weight="duotone" class="text-[var(--color-accent)]" />

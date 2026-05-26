@@ -5,6 +5,7 @@
 	import AdminFlash from '$lib/components/admin/AdminFlash.svelte';
 	import AdminMoltsPanel from '$lib/components/admin/AdminMoltsPanel.svelte';
 	import AdminNewsPanel from '$lib/components/admin/AdminNewsPanel.svelte';
+	import AdminGalleryPanel from '$lib/components/admin/AdminGalleryPanel.svelte';
 	import AdminSensorsPanel from '$lib/components/admin/AdminSensorsPanel.svelte';
 	import AdminSpiderForm from '$lib/components/admin/AdminSpiderForm.svelte';
 	import AdminTabs from '$lib/components/admin/AdminTabs.svelte';
@@ -70,6 +71,10 @@
 
 {#if activeTab === 'sensors'}
 	<AdminSensorsPanel {onSuccess} {onError} />
+{/if}
+
+{#if activeTab === 'gallery'}
+	<AdminGalleryPanel {onSuccess} {onError} />
 {/if}
 
 {#if activeTab === 'account'}

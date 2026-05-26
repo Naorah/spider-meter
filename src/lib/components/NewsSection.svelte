@@ -19,7 +19,7 @@
 </script>
 
 {#if latest}
-	<section class="animate-fade-up animate-delay-1 px-6 py-14 sm:px-10 lg:px-16">
+	<section id="actualites" class="animate-fade-up animate-delay-1 scroll-mt-28 px-6 py-14 sm:px-10 lg:px-16">
 		<div class="mx-auto max-w-5xl">
 			<div class="mb-6 flex items-center gap-3">
 				<Newspaper size={28} weight="duotone" class="text-[var(--color-accent)]" />

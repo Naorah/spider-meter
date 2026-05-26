@@ -14,7 +14,7 @@
 	});
 </script>
 
-<section class="animate-fade-up animate-delay-2 px-6 py-14 sm:px-10 lg:px-16">
+<section id="habitat" class="animate-fade-up animate-delay-2 scroll-mt-28 px-6 py-14 sm:px-10 lg:px-16">
 	<div class="mx-auto max-w-5xl">
 		<div class="mb-6 flex items-center gap-3">
 			<Plant size={28} weight="duotone" class="text-[var(--color-accent)]" />

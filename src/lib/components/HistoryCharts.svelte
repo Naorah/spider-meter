@@ -40,7 +40,7 @@
 	});
 </script>
 
-<section class="animate-fade-up animate-delay-3 px-6 py-14 sm:px-10 lg:px-16">
+<section id="historique" class="animate-fade-up animate-delay-3 scroll-mt-28 px-6 py-14 sm:px-10 lg:px-16">
 	<div class="mx-auto max-w-5xl">
 		<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 			<div class="flex items-center gap-3">

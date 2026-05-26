@@ -63,3 +63,17 @@ model AppSetting {
 
   @@map("app_settings")
 }
+
+model GalleryPhoto {
+  id          Int      @id @default(autoincrement())
+  objectKey  String   @unique @map("object_key")
+  caption     String
+  mimeType    String   @map("mime_type")
+  sizeBytes   Int      @map("size_bytes")
+  width       Int?
+  height      Int?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt(sort: Desc)])
+  @@map("gallery_photos")
+}

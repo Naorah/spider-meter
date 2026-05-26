@@ -1,9 +1,12 @@
 <script lang="ts">
 	import favicon from '$lib/assets/favicon.svg';
 	import '../app.css';
+	import SiteHeader from '$lib/components/SiteHeader.svelte';
+	import { page } from '$app/state';
 
 	let { children, data } = $props();
 	const meta = $derived(data.meta);
+	const isAdminRoute = $derived(page.url.pathname.startsWith('/admin'));
 </script>
 
 <svelte:head>
@@ -31,5 +34,9 @@
 	<meta name="twitter:image" content={meta.image} />
 	<meta name="twitter:image:alt" content="Phidippus — araignée du terrarium Spider-Meter" />
 </svelte:head>
+
+{#if !isAdminRoute}
+	<SiteHeader />
+{/if}
 
 {@render children()}

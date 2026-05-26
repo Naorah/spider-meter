@@ -1,12 +1,13 @@
 import type { MoltDto, NewsItemDto, SpiderProfileDto } from '$lib/types';
 
-export type AdminTab = 'spider' | 'token' | 'molts' | 'news' | 'sensors' | 'account';
+export type AdminTab = 'spider' | 'token' | 'molts' | 'news' | 'sensors' | 'gallery' | 'account';
 
 export const ADMIN_TABS: { id: AdminTab; label: string }[] = [
 	{ id: 'spider', label: 'Fiche occupante' },
 	{ id: 'molts', label: 'Mues' },
 	{ id: 'news', label: 'Actualités' },
 	{ id: 'sensors', label: 'Sondes' },
+	{ id: 'gallery', label: 'Galerie' },
 	{ id: 'account', label: 'Compte' },
 	{ id: 'token', label: 'Token Shelly' }
 ];
@@ -17,6 +18,7 @@ export function parseAdminTab(value: string | null): AdminTab {
 		value === 'molts' ||
 		value === 'news' ||
 		value === 'sensors' ||
+		value === 'gallery' ||
 		value === 'account'
 	) {
 		return value;

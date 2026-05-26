@@ -1,12 +1,99 @@
 <script lang="ts">
 	import LoginModal from '$lib/components/LoginModal.svelte';
-	import { Gear } from 'phosphor-svelte';
+	import { goto } from '$app/navigation';
+	import { Gear, Images, List, X } from 'phosphor-svelte';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+
+	const DETACH_START = 6;
+	const DETACH_END = 88;
 
 	let loginOpen = $state(false);
 	let needsSetup = $state(false);
 	let redirectTo = $state('/admin');
+	let menuOpen = $state(false);
+	let detach = $state(0);
+	let headerEl = $state<HTMLElement | null>(null);
+	let shellEl = $state<HTMLElement | null>(null);
+	let prefersReducedMotion = $state(false);
+
+	let anchor = $state({ x: 0, y: 0, w: 0 });
+	let menuAnchor = $state({ top: 0, left: 0, width: 0 });
+
+	const isFloating = $derived(detach > 0.12);
+	const headerHeight = $derived(64 + detach * 18);
+
+	type Strand = { id: string; d: string; delay: number; opacity: number };
+
+	let strands = $state<Strand[]>([]);
+
+	function clamp01(v: number) {
+		return Math.min(1, Math.max(0, v));
+	}
+
+	function computeDetach(scrollY: number) {
+		return clamp01((scrollY - DETACH_START) / (DETACH_END - DETACH_START));
+	}
+
+	function buildStrands(ax: number, ay: number, vw: number): Strand[] {
+		const anchors = [
+			{ x: -40, y: -8 },
+			{ x: vw * 0.18, y: -4 },
+			{ x: vw * 0.5, y: -6 },
+			{ x: vw * 0.82, y: -4 },
+			{ x: vw + 40, y: -8 },
+			{ x: vw * 0.33, y: ay * 0.12 },
+			{ x: vw * 0.67, y: ay * 0.11 }
+		];
+
+		return anchors.map((from, i) => {
+			const midX = from.x + (ax - from.x) * 0.45 + Math.sin(i * 1.7) * 28;
+			const midY = from.y + (ay - from.y) * 0.38 + Math.cos(i * 2.1) * 18;
+			const d = `M ${from.x} ${from.y} Q ${midX} ${midY} ${ax} ${ay}`;
+			const opacity = 0.22 + (i % 3) * 0.06;
+			return { id: `s-${i}`, d, delay: i * 0.04, opacity };
+		});
+	}
+
+	function updateGeometry() {
+		if (!headerEl || typeof window === 'undefined') return;
+		const rect = headerEl.getBoundingClientRect();
+		const shellRect = shellEl?.getBoundingClientRect();
+		const ax = shellRect
+			? shellRect.left + shellRect.width / 2
+			: rect.left + rect.width / 2;
+		const ay = rect.bottom;
+		anchor = { x: ax, y: ay, w: rect.width };
+
+		if (shellRect) {
+			menuAnchor = {
+				top: shellRect.bottom + 10,
+				left: shellRect.left,
+				width: shellRect.width
+			};
+		} else {
+			menuAnchor = {
+				top: rect.bottom + 10,
+				left: rect.left,
+				width: rect.width
+			};
+		}
+
+		strands = buildStrands(ax, ay, window.innerWidth);
+	}
+
+	function onScroll() {
+		detach = computeDetach(window.scrollY);
+		updateGeometry();
+	}
+
+	function closeMenu() {
+		menuOpen = false;
+	}
+
+	function onKeyDown(e: KeyboardEvent) {
+		if (e.key === 'Escape') closeMenu();
+	}
 
 	async function openLoginModal() {
 		const res = await fetch('/api/auth/setup');
@@ -17,29 +104,185 @@
 		loginOpen = true;
 	}
 
-	onMount(async () => {
+	async function isAuthenticated(): Promise<boolean> {
+		try {
+			const res = await fetch('/api/auth/status');
+			if (!res.ok) return false;
+			const data = await res.json();
+			return Boolean(data.authenticated);
+		} catch {
+			return false;
+		}
+	}
+
+	async function openAdmin() {
+		closeMenu();
+		if (await isAuthenticated()) {
+			await goto('/admin');
+			return;
+		}
+		await openLoginModal();
+	}
+
+	onMount(() => {
+		prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 		const params = page.url.searchParams;
 		if (params.get('login') === '1') {
 			redirectTo = params.get('redirect') || '/admin';
-			await openLoginModal();
+			void (async () => {
+				if (await isAuthenticated()) {
+					await goto(redirectTo);
+					return;
+				}
+				await openLoginModal();
+			})();
 		}
+
+		onScroll();
+		window.addEventListener('scroll', onScroll, { passive: true });
+		window.addEventListener('resize', updateGeometry);
+		window.addEventListener('keydown', onKeyDown);
+
+		return () => {
+			window.removeEventListener('scroll', onScroll);
+			window.removeEventListener('resize', updateGeometry);
+			window.removeEventListener('keydown', onKeyDown);
+		};
+	});
+
+	$effect(() => {
+		if (!headerEl) return;
+		updateGeometry();
+		const ro = new ResizeObserver(updateGeometry);
+		ro.observe(headerEl);
+		if (shellEl) ro.observe(shellEl);
+		return () => ro.disconnect();
+	});
+
+	$effect(() => {
+		document.body.style.overflow = menuOpen ? 'hidden' : '';
 	});
 </script>
 
-<header class="border-b border-[var(--color-border)] bg-[var(--color-bg)]/90 backdrop-blur-md">
-	<div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4 sm:px-10 lg:px-16">
-		<a href="/" class="text-sm font-semibold tracking-wide text-[var(--color-text)]">
-			Spider-Meter
-		</a>
-		<button
-			type="button"
-			class="btn-secondary inline-flex items-center gap-2"
-			onclick={openLoginModal}
-		>
-			<Gear size={18} weight="duotone" />
-			Admin
-		</button>
+<!-- Réserve l'espace sous la barre fixe -->
+<div
+	class="pointer-events-none"
+	style="height: {headerHeight}px"
+	aria-hidden="true"
+></div>
+
+<!-- Toile d'araignée (viewport) — se déchire au scroll -->
+{#if !prefersReducedMotion && detach < 0.98}
+	<svg
+		class="site-header-web"
+		aria-hidden="true"
+		style="--detach: {detach}"
+	>
+		{#each strands as strand (strand.id)}
+			<path
+				class="site-header-web__strand"
+				d={strand.d}
+				style="
+					--strand-delay: {strand.delay}s;
+					--strand-base-opacity: {strand.opacity};
+					--strand-dash: {520 + detach * 180};
+				"
+			/>
+		{/each}
+		{#if detach > 0.2 && detach < 0.85}
+			<circle
+				class="site-header-web__snap"
+				cx={anchor.x}
+				cy={anchor.y}
+				r={6 + detach * 14}
+				style="--detach: {detach}"
+			/>
+		{/if}
+	</svg>
+{/if}
+
+<!-- Particules de déchirement -->
+{#if !prefersReducedMotion && detach > 0.35 && detach < 0.72}
+	<div class="site-header-tear-bits" aria-hidden="true" style="--detach: {detach}">
+		{#each Array(8) as _, i}
+			<span
+				class="site-header-tear-bits__bit"
+				style="
+					left: calc({anchor.x}px + {(i - 4) * 11}px);
+					top: calc({anchor.y}px - 4px);
+					--bit-i: {i};
+					--detach: {detach};
+				"
+			></span>
+		{/each}
+	</div>
+{/if}
+
+<header
+	bind:this={headerEl}
+	class="site-header"
+	class:site-header--floating={isFloating}
+	style="--detach: {detach}"
+>
+	<div bind:this={shellEl} class="site-header__shell">
+		<div class="site-header__inner">
+			<a href="/" class="site-header__brand">
+				<span class="site-header__brand-mark" aria-hidden="true"></span>
+				<span>Spider-Meter</span>
+			</a>
+
+			<button
+				type="button"
+				class="site-header__burger-btn"
+				aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+				aria-expanded={menuOpen}
+				aria-controls="site-menu"
+				onclick={() => {
+					updateGeometry();
+					menuOpen = !menuOpen;
+				}}
+			>
+				{#if menuOpen}
+					<X size={20} weight="bold" />
+				{:else}
+					<List size={20} weight="bold" />
+				{/if}
+			</button>
+		</div>
 	</div>
 </header>
+
+{#if menuOpen}
+	<button
+		type="button"
+		class="site-header-menu-backdrop"
+		aria-label="Fermer le menu"
+		onclick={closeMenu}
+	></button>
+
+	<nav
+		id="site-menu"
+		class="site-header-menu"
+		class:site-header-menu--open={menuOpen}
+		aria-label="Menu"
+		style="--menu-top: {menuAnchor.top}px; --menu-left: {menuAnchor.left}px; --menu-width: {menuAnchor.width}px"
+	>
+		<ul class="site-header-menu__list">
+			<li>
+				<a href="/gallery" class="site-header-menu__item" onclick={closeMenu}>
+					<Images size={20} weight="duotone" class="site-header-menu__icon" />
+					<span>Galerie</span>
+				</a>
+			</li>
+			<li>
+				<button type="button" class="site-header-menu__item" onclick={() => void openAdmin()}>
+					<Gear size={20} weight="duotone" class="site-header-menu__icon" />
+					<span>Admin</span>
+				</button>
+			</li>
+		</ul>
+	</nav>
+{/if}
 
 <LoginModal bind:open={loginOpen} {needsSetup} {redirectTo} />

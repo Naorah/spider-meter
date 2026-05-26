@@ -4,7 +4,6 @@
 	import HistoryCharts from '$lib/components/HistoryCharts.svelte';
 	import MoltsSection from '$lib/components/MoltsSection.svelte';
 	import NewsSection from '$lib/components/NewsSection.svelte';
-	import SiteHeader from '$lib/components/SiteHeader.svelte';
 	import SpiderCard from '$lib/components/SpiderCard.svelte';
 	import { fetchSensorReadings, SENSOR_POLL_INTERVAL_MS } from '$lib/sensor-poll';
 	import type { SensorReadingDto } from '$lib/types';
@@ -43,8 +42,6 @@
 		};
 	});
 </script>
-
-<SiteHeader />
 
 <Hero />
 
