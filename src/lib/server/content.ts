@@ -83,7 +83,7 @@ export async function getPublicContent() {
 		getSpiderProfile(),
 		getMolts(),
 		getLatestNews(),
-		getNewsHistorySummaries(10)
+		getNewsHistory(10)
 	]);
 
 	return { spider, molts, latestNews, newsHistory };
