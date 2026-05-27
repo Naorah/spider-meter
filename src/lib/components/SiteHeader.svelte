@@ -1,7 +1,7 @@
 <script lang="ts">
 	import LoginModal from '$lib/components/LoginModal.svelte';
 	import { goto } from '$app/navigation';
-	import { Gear, Images, List, X } from 'phosphor-svelte';
+	import { Gear } from 'phosphor-svelte';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 
@@ -11,14 +11,12 @@
 	let loginOpen = $state(false);
 	let needsSetup = $state(false);
 	let redirectTo = $state('/admin');
-	let menuOpen = $state(false);
 	let detach = $state(0);
 	let headerEl = $state<HTMLElement | null>(null);
 	let shellEl = $state<HTMLElement | null>(null);
 	let prefersReducedMotion = $state(false);
 
 	let anchor = $state({ x: 0, y: 0, w: 0 });
-	let menuAnchor = $state({ top: 0, left: 0, width: 0 });
 
 	const isFloating = $derived(detach > 0.12);
 	const headerHeight = $derived(64 + detach * 18);
@@ -64,35 +62,12 @@
 			: rect.left + rect.width / 2;
 		const ay = rect.bottom;
 		anchor = { x: ax, y: ay, w: rect.width };
-
-		if (shellRect) {
-			menuAnchor = {
-				top: shellRect.bottom + 10,
-				left: shellRect.left,
-				width: shellRect.width
-			};
-		} else {
-			menuAnchor = {
-				top: rect.bottom + 10,
-				left: rect.left,
-				width: rect.width
-			};
-		}
-
 		strands = buildStrands(ax, ay, window.innerWidth);
 	}
 
 	function onScroll() {
 		detach = computeDetach(window.scrollY);
 		updateGeometry();
-	}
-
-	function closeMenu() {
-		menuOpen = false;
-	}
-
-	function onKeyDown(e: KeyboardEvent) {
-		if (e.key === 'Escape') closeMenu();
 	}
 
 	async function openLoginModal() {
@@ -116,7 +91,6 @@
 	}
 
 	async function openAdmin() {
-		closeMenu();
 		if (await isAuthenticated()) {
 			await goto('/admin');
 			return;
@@ -142,12 +116,10 @@
 		onScroll();
 		window.addEventListener('scroll', onScroll, { passive: true });
 		window.addEventListener('resize', updateGeometry);
-		window.addEventListener('keydown', onKeyDown);
 
 		return () => {
 			window.removeEventListener('scroll', onScroll);
 			window.removeEventListener('resize', updateGeometry);
-			window.removeEventListener('keydown', onKeyDown);
 		};
 	});
 
@@ -158,10 +130,6 @@
 		ro.observe(headerEl);
 		if (shellEl) ro.observe(shellEl);
 		return () => ro.disconnect();
-	});
-
-	$effect(() => {
-		document.body.style.overflow = menuOpen ? 'hidden' : '';
 	});
 </script>
 
@@ -234,55 +202,14 @@
 
 			<button
 				type="button"
-				class="site-header__burger-btn"
-				aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-				aria-expanded={menuOpen}
-				aria-controls="site-menu"
-				onclick={() => {
-					updateGeometry();
-					menuOpen = !menuOpen;
-				}}
+				class="site-header__admin-btn"
+				aria-label="Administration"
+				onclick={() => void openAdmin()}
 			>
-				{#if menuOpen}
-					<X size={20} weight="bold" />
-				{:else}
-					<List size={20} weight="bold" />
-				{/if}
+				<Gear size={20} weight="bold" />
 			</button>
 		</div>
 	</div>
 </header>
-
-{#if menuOpen}
-	<button
-		type="button"
-		class="site-header-menu-backdrop"
-		aria-label="Fermer le menu"
-		onclick={closeMenu}
-	></button>
-
-	<nav
-		id="site-menu"
-		class="site-header-menu"
-		class:site-header-menu--open={menuOpen}
-		aria-label="Menu"
-		style="--menu-top: {menuAnchor.top}px; --menu-left: {menuAnchor.left}px; --menu-width: {menuAnchor.width}px"
-	>
-		<ul class="site-header-menu__list">
-			<li>
-				<a href="/gallery" class="site-header-menu__item" onclick={closeMenu}>
-					<Images size={20} weight="duotone" class="site-header-menu__icon" />
-					<span>Galerie</span>
-				</a>
-			</li>
-			<li>
-				<button type="button" class="site-header-menu__item" onclick={() => void openAdmin()}>
-					<Gear size={20} weight="duotone" class="site-header-menu__icon" />
-					<span>Admin</span>
-				</button>
-			</li>
-		</ul>
-	</nav>
-{/if}
 
 <LoginModal bind:open={loginOpen} {needsSetup} {redirectTo} />

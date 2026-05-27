@@ -57,6 +57,9 @@ body {
 .animate-delay-4 {
 	animation-delay: 0.4s;
 }
+.animate-delay-5 {
+	animation-delay: 0.5s;
+}
 
 .card {
 	background: color-mix(in srgb, var(--color-bg-elevated) 85%, transparent);
@@ -436,11 +439,6 @@ body {
 }
 
 .site-header__admin-btn {
-	white-space: nowrap;
-}
-
-/* Menu burger */
-.site-header__burger-btn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -454,136 +452,19 @@ body {
 	transition:
 		border-color 0.2s ease,
 		transform 0.2s ease,
-		background 0.2s ease;
-	pointer-events: auto;
-}
-
-.site-header__burger-btn:hover {
-	border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
-	transform: rotate(10deg) scale(1.05);
-}
-
-.site-header-menu-backdrop {
-	position: fixed;
-	inset: 0;
-	z-index: 49;
-	border: none;
-	background: color-mix(in srgb, var(--color-bg) 25%, transparent);
-	backdrop-filter: blur(6px);
-	cursor: pointer;
-	animation: site-header-menu-backdrop-in 0.28s ease both;
-}
-
-@keyframes site-header-menu-backdrop-in {
-	from {
-		opacity: 0;
-	}
-	to {
-		opacity: 1;
-	}
-}
-
-.site-header-menu {
-	position: fixed;
-	top: var(--menu-top);
-	left: var(--menu-left);
-	width: var(--menu-width);
-	z-index: 51;
-	padding: 0.4rem;
-	border-radius: 1rem;
-	border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
-	background: color-mix(in srgb, var(--color-bg-elevated) 94%, transparent);
-	backdrop-filter: blur(20px);
-	box-shadow:
-		0 4px 6px -2px color-mix(in srgb, #000 20%, transparent),
-		0 16px 40px -12px color-mix(in srgb, #000 45%, transparent),
-		0 0 0 1px color-mix(in srgb, var(--color-accent) 8%, transparent);
-	transform-origin: top center;
-	opacity: 0;
-	transform: translateY(-6px) scale(0.97);
-	transition:
-		opacity 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-		transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
-	pointer-events: none;
-}
-
-.site-header-menu--open {
-	opacity: 1;
-	transform: translateY(0) scale(1);
-	pointer-events: auto;
-}
-
-.site-header-menu__list {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 0.2rem;
-}
-
-.site-header-menu__item {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-	width: 100%;
-	padding: 0.8rem 0.95rem;
-	border: none;
-	border-radius: 0.75rem;
-	background: transparent;
-	color: var(--color-text);
-	font-size: 0.92rem;
-	font-weight: 500;
-	text-decoration: none;
-	text-align: left;
-	cursor: pointer;
-	transition:
 		background 0.2s ease,
 		color 0.2s ease;
+	pointer-events: auto;
 }
 
-.site-header-menu__icon {
-	flex-shrink: 0;
+.site-header__admin-btn:hover {
+	border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
 	color: var(--color-accent);
-	opacity: 0.9;
-}
-
-.site-header-menu__item:hover,
-.site-header-menu__item:focus-visible {
-	background: color-mix(in srgb, var(--color-accent) 10%, transparent);
-	color: var(--color-accent);
-	outline: none;
-}
-
-.site-header-menu--open .site-header-menu__item {
-	animation: site-header-menu-item-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) backwards;
-}
-
-.site-header-menu--open .site-header-menu__list li:nth-child(1) .site-header-menu__item {
-	animation-delay: 0.04s;
-}
-
-.site-header-menu--open .site-header-menu__list li:nth-child(2) .site-header-menu__item {
-	animation-delay: 0.08s;
-}
-
-@keyframes site-header-menu-item-in {
-	from {
-		opacity: 0;
-		transform: translateY(-4px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
+	transform: rotate(90deg) scale(1.05);
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.site-header-menu,
-	.site-header-menu-backdrop,
-	.site-header__burger-btn,
-	.site-header-menu__item {
-		animation: none !important;
+	.site-header__admin-btn {
 		transition-duration: 0.01ms !important;
 	}
 }

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import GalleryCarousel from '$lib/components/GalleryCarousel.svelte';
 	import HabitatLive from '$lib/components/HabitatLive.svelte';
 	import Hero from '$lib/components/Hero.svelte';
 	import HistoryCharts from '$lib/components/HistoryCharts.svelte';
@@ -56,6 +57,8 @@
 <HistoryCharts />
 
 <MoltsSection molts={data.molts} />
+
+<GalleryCarousel />
 
 <footer class="border-t border-[var(--color-border)] px-6 py-8 text-center text-sm text-[var(--color-muted)]">
 	Spider-Meter — monitoring terrarium

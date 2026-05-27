@@ -1,6 +1,7 @@
 <script lang="ts">
 	import GalleryLightbox from '$lib/components/GalleryLightbox.svelte';
 	import type { GalleryPhotoListDto, GalleryPhotoListItemDto } from '$lib/types';
+	import { Images } from 'phosphor-svelte';
 	import { onMount } from 'svelte';
 
 	const PAGE_SIZE = 24;
@@ -63,16 +64,21 @@
 	});
 </script>
 
-<section class="px-6 py-14 sm:px-10 lg:px-16">
-	<div class="mx-auto max-w-6xl">
-		<h2 class="section-title">Galerie</h2>
-		<p class="section-subtitle">Photos du terrarium — cliquez sur une image pour l’agrandir</p>
+<section id="galerie" class="animate-fade-up animate-delay-5 scroll-mt-28 px-6 py-14 sm:px-10 lg:px-16">
+	<div class="mx-auto max-w-5xl">
+		<div class="mb-6 flex items-center gap-3">
+			<Images size={28} weight="duotone" class="text-[var(--color-accent)]" />
+			<div>
+				<h2 class="section-title">Galerie</h2>
+				<p class="section-subtitle">Photos du terrarium — cliquez sur une image pour l’agrandir</p>
+			</div>
+		</div>
 
 		{#if error}
-			<p class="mt-6 text-sm text-red-400">{error}</p>
+			<p class="mb-4 text-sm text-red-400">{error}</p>
 		{/if}
 
-		<ul class="gallery-masonry mt-8">
+		<ul class="gallery-masonry">
 			{#each items as item (item.id)}
 				<li class="gallery-tile">
 					<button
