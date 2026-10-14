@@ -19,7 +19,7 @@
 		timeStyle: 'short'
 	});
 
-	const older = $derived(history.filter((n) => n.id !== latest?.id).slice(0, 5));
+	const older = $derived(history.filter((n) => n.id !== latest?.id));
 
 	function openArchive(item: NewsItemDto) {
 		detailItem = item;

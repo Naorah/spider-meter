@@ -52,10 +52,10 @@ export async function getLatestNews(): Promise<NewsItemDto | null> {
 	};
 }
 
-export async function getNewsHistory(limit = 20): Promise<NewsItemDto[]> {
+export async function getNewsHistory(limit?: number): Promise<NewsItemDto[]> {
 	const rows = await prisma.newsItem.findMany({
 		orderBy: { publishedAt: 'desc' },
-		take: limit
+		...(limit != null ? { take: limit } : {})
 	});
 	return rows.map((r) => ({
 		id: r.id,
@@ -65,10 +65,10 @@ export async function getNewsHistory(limit = 20): Promise<NewsItemDto[]> {
 	}));
 }
 
-export async function getNewsHistorySummaries(limit = 20): Promise<NewsItemSummaryDto[]> {
+export async function getNewsHistorySummaries(limit?: number): Promise<NewsItemSummaryDto[]> {
 	const rows = await prisma.newsItem.findMany({
 		orderBy: { publishedAt: 'desc' },
-		take: limit,
+		...(limit != null ? { take: limit } : {}),
 		select: { id: true, title: true, publishedAt: true }
 	});
 	return rows.map((r) => ({
@@ -83,7 +83,7 @@ export async function getPublicContent() {
 		getSpiderProfile(),
 		getMolts(),
 		getLatestNews(),
-		getNewsHistory(10)
+		getNewsHistory()
 	]);
 
 	return { spider, molts, latestNews, newsHistory };
